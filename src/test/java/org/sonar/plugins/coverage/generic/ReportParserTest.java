@@ -148,6 +148,14 @@ public class ReportParserTest {
   }
 
   @Test(expected = ReportParsingException.class)
+  public void lineNumber_in_lineToCover_should_appear_several_times_for_same_file() throws Exception {
+    addFileToContext(setupFile("file1"));
+    parseReportString("<coverage version=\"1\"><file path=\"file1\">"
+      + "<lineToCover lineNumber=\"1\" covered=\"true\"/>"
+      + "<lineToCover lineNumber=\"1\" covered=\"true\"/></file></coverage>");
+  }
+
+  @Test(expected = ReportParsingException.class)
   public void missing_covered_in_lineToCover() throws Exception {
     addFileToContext(setupFile("file1"));
     parseReportString("<coverage version=\"1\"><file path=\"file1\"><lineToCover lineNumber=\"3\"/></file></coverage>");

@@ -103,8 +103,9 @@ public class ReportParser {
       CoverageMeasuresBuilder measureBuilder = CoverageMeasuresBuilder.create();
 
       SMInputCursor lineToCoverCursor = fileCursor.childElementCursor();
+      Set<Integer> parsedLineNumbers = Sets.newHashSet();
       while (lineToCoverCursor.getNext() != null) {
-        parseLineToCover(measureBuilder, lineToCoverCursor);
+        parseLineToCover(measureBuilder, lineToCoverCursor, parsedLineNumbers);
       }
 
       for (Measure measure : measureBuilder.createMeasures()) {
@@ -121,10 +122,14 @@ public class ReportParser {
     }
   }
 
-  private void parseLineToCover(CoverageMeasuresBuilder measureBuilder, SMInputCursor cursor) throws XMLStreamException {
+  private void parseLineToCover(CoverageMeasuresBuilder measureBuilder, SMInputCursor cursor, Set<Integer> parsedLineNumbers)
+    throws XMLStreamException {
+
     checkElementName(cursor, "lineToCover");
     String lineNumberAsString = mandatoryAttribute(cursor, LINE_NUMBER_ATTR);
     int lineNumber = intValue(lineNumberAsString, cursor, LINE_NUMBER_ATTR, 1);
+    addParsedLineNumber(parsedLineNumbers, lineNumber, cursor);
+
     String coveredAsString = mandatoryAttribute(cursor, COVERED_ATTR);
     if (!"true".equalsIgnoreCase(coveredAsString) && !"false".equalsIgnoreCase(coveredAsString)) {
       throw new ReportParsingException(expectedMessage("boolean value", COVERED_ATTR, coveredAsString), cursor);
@@ -144,6 +149,14 @@ public class ReportParser {
         }
       }
       measureBuilder.setConditions(lineNumber, branchesToCover, coveredBranches);
+    }
+  }
+
+  private void addParsedLineNumber(Set<Integer> parsedLineNumbers, int lineNumber, SMInputCursor cursor) throws XMLStreamException {
+    boolean added = parsedLineNumbers.add(lineNumber);
+    if (!added) {
+      String message = "Coverage data cannot be added multiple times for the same line number (" + lineNumber + ") of the same file";
+      throw new ReportParsingException(message, cursor);
     }
   }
 
