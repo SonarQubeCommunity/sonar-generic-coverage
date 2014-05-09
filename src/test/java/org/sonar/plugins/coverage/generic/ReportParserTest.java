@@ -161,6 +161,12 @@ public class ReportParserTest {
       + "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"2\" coveredBranches=\"x\"/></file></coverage>");
   }
 
+  @Test(expected = ReportParsingException.class)
+  public void same_file_appearing_multiple_times() throws Exception {
+    addFileToContext(setupFile("file1"));
+    parseReportString("<coverage version=\"1\"><file path=\"file1\"/><file path=\"file1\"/></coverage>");
+  }
+
   private void addFileToContext(File file1) {
     when(context.getResource(file1)).thenReturn(file1);
   }

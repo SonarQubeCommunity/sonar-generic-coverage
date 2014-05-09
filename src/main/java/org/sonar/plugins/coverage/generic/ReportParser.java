@@ -20,6 +20,7 @@
 package org.sonar.plugins.coverage.generic;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.sonar.api.batch.SensorContext;
@@ -32,6 +33,7 @@ import javax.xml.stream.XMLStreamException;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 
 public class ReportParser {
 
@@ -49,6 +51,7 @@ public class ReportParser {
   private int numberOfMatchedFiles;
   private int numberOfUnknownFiles;
   private List<String> firstUnknownFiles = Lists.newArrayList();
+  private Set<String> matchedFileKeys = Sets.newHashSet();
 
   public ReportParser(InputStream inputStream, ResourceLocator resourceLocator, SensorContext context) throws XMLStreamException {
     this.inputStream = inputStream;
@@ -95,6 +98,7 @@ public class ReportParser {
         }
         continue;
       }
+      addMatchedFile(resource, filePath, fileCursor);
 
       CoverageMeasuresBuilder measureBuilder = CoverageMeasuresBuilder.create();
 
@@ -107,6 +111,13 @@ public class ReportParser {
         context.saveMeasure(resource, measure);
       }
       numberOfMatchedFiles++;
+    }
+  }
+
+  private void addMatchedFile(File resource, String filePath, SMInputCursor cursor) throws XMLStreamException {
+    boolean added = matchedFileKeys.add(resource.getKey());
+    if (!added) {
+      throw new ReportParsingException("Coverage data cannot be added multiples times for the same file: " + filePath, cursor);
     }
   }
 
