@@ -124,16 +124,26 @@ public class ReportParser {
   private void parseLineToCover(CoverageMeasuresBuilder measureBuilder, SMInputCursor cursor) throws XMLStreamException {
     checkElementName(cursor, "lineToCover");
     String lineNumberAsString = mandatoryAttribute(cursor, LINE_NUMBER_ATTR);
-    int lineNumber = intValue(lineNumberAsString, cursor, LINE_NUMBER_ATTR);
+    int lineNumber = intValue(lineNumberAsString, cursor, LINE_NUMBER_ATTR, 1);
     String coveredAsString = mandatoryAttribute(cursor, COVERED_ATTR);
+    if (!"true".equalsIgnoreCase(coveredAsString) && !"false".equalsIgnoreCase(coveredAsString)) {
+      throw new ReportParsingException(expectedMessage("boolean value", COVERED_ATTR, coveredAsString), cursor);
+    }
     boolean covered = Boolean.parseBoolean(coveredAsString);
     measureBuilder.setHits(lineNumber, covered ? 1 : 0);
 
-    String branchesToCover = cursor.getAttrValue(BRANCHES_TO_COVER_ATTR);
-    if (branchesToCover != null) {
+    String branchesToCoverAsString = cursor.getAttrValue(BRANCHES_TO_COVER_ATTR);
+    if (branchesToCoverAsString != null) {
+      int branchesToCover = intValue(branchesToCoverAsString, cursor, BRANCHES_TO_COVER_ATTR, 0);
       String coveredBranchesAsString = cursor.getAttrValue(COVERED_BRANCHES_ATTR);
-      int coveredBranches = coveredBranchesAsString == null ? 0 : intValue(coveredBranchesAsString, cursor, COVERED_BRANCHES_ATTR);
-      measureBuilder.setConditions(lineNumber, intValue(branchesToCover, cursor, BRANCHES_TO_COVER_ATTR), coveredBranches);
+      int coveredBranches = 0;
+      if (coveredBranchesAsString != null) {
+        coveredBranches = intValue(coveredBranchesAsString, cursor, COVERED_BRANCHES_ATTR, 0);
+        if (coveredBranches > branchesToCover) {
+          throw new ReportParsingException("\"coveredBranches\" should not be greater than \"branchesToCover\"", cursor);
+        }
+      }
+      measureBuilder.setConditions(lineNumber, branchesToCover, coveredBranches);
     }
   }
 
@@ -154,13 +164,24 @@ public class ReportParser {
     return attributeValue;
   }
 
-  private int intValue(String stringValue, SMInputCursor cursor, String attributeName) throws XMLStreamException {
+  private int intValue(String stringValue, SMInputCursor cursor, String attributeName, int minimum) throws XMLStreamException {
+    int intValue;
     try {
-      return Integer.valueOf(stringValue);
+      intValue = Integer.valueOf(stringValue);
     } catch (NumberFormatException e) {
-      String message = "Expected integer value for attribute \"" + attributeName + "\" but got \"" + stringValue + "\"";
+      String message = expectedMessage("integer value", attributeName, stringValue);
       throw new ReportParsingException(message, e, cursor.getCursorLocation().getLineNumber());
     }
+    if (intValue < minimum) {
+      String message =
+        "Value of attribute \"" + attributeName + "\" is \"" + intValue + "\" but it should be greater than or equal to " + minimum;
+      throw new ReportParsingException(message, cursor);
+    }
+    return intValue;
+  }
+
+  private String expectedMessage(String expected, String attributeName, String stringValue) {
+    return "Expected " + expected + " for attribute \"" + attributeName + "\" but got \"" + stringValue + "\"";
   }
 
   public int numberOfMatchedFiles() {

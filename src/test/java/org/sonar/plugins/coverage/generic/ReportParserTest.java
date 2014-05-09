@@ -136,9 +136,15 @@ public class ReportParserTest {
   }
 
   @Test(expected = ReportParsingException.class)
-  public void invalid_lineNumber_in_lineToCover() throws Exception {
+  public void lineNumber_in_lineToCover_should_be_a_number() throws Exception {
     addFileToContext(setupFile("file1"));
     parseReportString("<coverage version=\"1\"><file path=\"file1\"><lineToCover lineNumber=\"x\" covered=\"true\"/></file></coverage>");
+  }
+
+  @Test(expected = ReportParsingException.class)
+  public void lineNumber_in_lineToCover_should_be_positive() throws Exception {
+    addFileToContext(setupFile("file1"));
+    parseReportString("<coverage version=\"1\"><file path=\"file1\"><lineToCover lineNumber=\"0\" covered=\"true\"/></file></coverage>");
   }
 
   @Test(expected = ReportParsingException.class)
@@ -148,17 +154,44 @@ public class ReportParserTest {
   }
 
   @Test(expected = ReportParsingException.class)
-  public void invalid_branchesToCover_in_lineToCover() throws Exception {
+  public void covered_in_lineToCover_should_be_a_boolean() throws Exception {
+    addFileToContext(setupFile("file1"));
+    parseReportString("<coverage version=\"1\"><file path=\"file1\"><lineToCover lineNumber=\"3\" covered=\"x\"/></file></coverage>");
+  }
+
+  @Test(expected = ReportParsingException.class)
+  public void branchesToCover_in_lineToCover_should_be_a_number() throws Exception {
     addFileToContext(setupFile("file1"));
     parseReportString("<coverage version=\"1\"><file path=\"file1\">"
       + "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"x\"/></file></coverage>");
   }
 
   @Test(expected = ReportParsingException.class)
-  public void invalid_coveredBranches_in_lineToCover() throws Exception {
+  public void branchesToCover_in_lineToCover_should_not_be_negative() throws Exception {
+    addFileToContext(setupFile("file1"));
+    parseReportString("<coverage version=\"1\"><file path=\"file1\">"
+      + "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"-1\"/></file></coverage>");
+  }
+
+  @Test(expected = ReportParsingException.class)
+  public void coveredBranches_in_lineToCover_should_be_a_number() throws Exception {
     addFileToContext(setupFile("file1"));
     parseReportString("<coverage version=\"1\"><file path=\"file1\">"
       + "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"2\" coveredBranches=\"x\"/></file></coverage>");
+  }
+
+  @Test(expected = ReportParsingException.class)
+  public void coveredBranches_in_lineToCover_should_not_be_negative() throws Exception {
+    addFileToContext(setupFile("file1"));
+    parseReportString("<coverage version=\"1\"><file path=\"file1\">"
+      + "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"2\" coveredBranches=\"-1\"/></file></coverage>");
+  }
+
+  @Test(expected = ReportParsingException.class)
+  public void coveredBranches_should_not_be_greater_than_branchesToCover() throws Exception {
+    addFileToContext(setupFile("file1"));
+    parseReportString("<coverage version=\"1\"><file path=\"file1\">"
+      + "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"2\" coveredBranches=\"3\"/></file></coverage>");
   }
 
   @Test(expected = ReportParsingException.class)
