@@ -71,7 +71,7 @@ public class GenericCoverageSensor implements Sensor {
     try {
       inputStream = new FileInputStream(reportFile);
     } catch (FileNotFoundException e) {
-      LOG.warn("Cannot find coverage report to parse", e);
+      LOG.warn("Cannot find coverage report to parse: " + reportAbsolutePath);
       return;
     }
 
