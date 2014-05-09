@@ -88,9 +88,7 @@ public class GenericCoverageSensor implements Sensor {
     int numberOfUnknownFiles = parser.numberOfUnknownFiles();
     if (numberOfUnknownFiles > 0) {
       String fileList = Joiner.on("\n").join(parser.firstUnknownFiles());
-      int numberOfUnlistedFiles = numberOfUnknownFiles - parser.firstUnknownFiles().size();
-      String otherFiles = numberOfUnlistedFiles == 0 ? "" : " and " + numberOfUnlistedFiles + " other unknown files";
-      LOG.info("Could not import coverage data for the following unknown files" + otherFiles + ":\n" + fileList);
+      LOG.info("Coverage data ignored for " + numberOfUnknownFiles + " unknown files, including:\n" + fileList);
     }
   }
 

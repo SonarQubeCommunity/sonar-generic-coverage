@@ -132,16 +132,16 @@ public class GenericCoverageSensorTest {
   public void analyse_report_with_unknown_files() throws Exception {
     configureReportPath("coverage_with_2_unknown_files.xml");
     sensor.analyse(project, context);
-    assertThat(loggingEvents.get(2).getMessage()).contains("Could not import coverage data for");
+    assertThat(loggingEvents.get(2).getMessage()).contains("Coverage data ignored for 2 unknown files");
   }
 
   @Test
-  public void analyse_report_with_6_unknown_files() throws Exception {
+  public void analyse_report_with_7_unknown_files() throws Exception {
     configureReportPath("coverage_with_7_unknown_files.xml");
     sensor.analyse(project, context);
     String message = loggingEvents.get(2).getMessage();
-    assertThat(message).contains("Could not import coverage data for");
-    assertThat(message).contains("2 other unknown files");
+    assertThat(message).contains("Coverage data ignored for 7 unknown files");
+    assertThat(message).contains("unknown1.js");
     assertThat(Splitter.on("\n").split(message)).hasSize(6);
   }
 
