@@ -33,9 +33,6 @@ import org.sonar.api.utils.SonarException;
 import javax.xml.stream.XMLStreamException;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 
 public class GenericCoverageSensor implements Sensor {
 
@@ -67,17 +64,14 @@ public class GenericCoverageSensor implements Sensor {
     String reportAbsolutePath = reportFile.getAbsolutePath();
     LOG.info("Parsing " + reportAbsolutePath);
 
-    InputStream inputStream;
-    try {
-      inputStream = new FileInputStream(reportFile);
-    } catch (FileNotFoundException e) {
+    if (!reportFile.exists()) {
       LOG.warn("Cannot find coverage report to parse: " + reportAbsolutePath);
       return;
     }
 
     ReportParser parser;
     try {
-      parser = ReportParser.parse(inputStream, new ResourceLocator(project, fs), context);
+      parser = ReportParser.parse(reportFile, new ResourceLocator(project, fs), context);
     } catch (XMLStreamException e) {
       throw new SonarException("Cannot parse generic coverage report " + reportAbsolutePath, e);
     } catch (ReportParsingException e) {

@@ -27,10 +27,13 @@ import org.sonar.api.batch.SensorContext;
 import org.sonar.api.measures.CoverageMeasuresBuilder;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.resources.File;
+import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.StaxParser;
 
 import javax.xml.stream.XMLStreamException;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
@@ -63,6 +66,17 @@ public class ReportParser {
   public static ReportParser parse(InputStream inputStream, ResourceLocator resourceLocator, SensorContext context)
     throws XMLStreamException {
     return new ReportParser(inputStream, resourceLocator, context);
+  }
+
+  public static ReportParser parse(java.io.File reportFile, ResourceLocator resourceLocator, SensorContext context)
+    throws XMLStreamException {
+    InputStream inputStream;
+    try {
+      inputStream = new FileInputStream(reportFile);
+    } catch (FileNotFoundException e) {
+      throw new SonarException(e);
+    }
+    return parse(inputStream, resourceLocator, context);
   }
 
   private void parse() throws XMLStreamException {

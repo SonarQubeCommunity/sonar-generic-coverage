@@ -30,9 +30,9 @@ import org.sonar.api.measures.Measure;
 import org.sonar.api.measures.Metric;
 import org.sonar.api.resources.File;
 import org.sonar.api.utils.KeyValueFormat;
+import org.sonar.api.utils.SonarException;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -208,6 +208,11 @@ public class ReportParserTest {
     parseReportString("<coverage version=\"1\"><file path=\"file1\"/><file path=\"file1\"/></coverage>");
   }
 
+  @Test(expected = SonarException.class)
+  public void testUnknownFile() throws Exception {
+    parseReportFile("xxx.xml");
+  }
+
   private void addFileToContext(File file1) {
     when(context.getResource(file1)).thenReturn(file1);
   }
@@ -218,7 +223,7 @@ public class ReportParserTest {
   }
 
   private ReportParser parseReportFile(String reportLocation) throws Exception {
-    return ReportParser.parse(new FileInputStream(reportLocation), resourceLocator, context);
+    return ReportParser.parse(new java.io.File(reportLocation), resourceLocator, context);
   }
 
   private Measure dataMeasure(Metric metric, Map<Integer, Integer> data) {
