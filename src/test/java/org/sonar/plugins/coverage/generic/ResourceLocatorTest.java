@@ -43,7 +43,7 @@ public class ResourceLocatorTest {
 
   private ResourceLocator locator;
 
-  private File baseDir = new File("src/test/resources/project1").getAbsoluteFile();
+  private final File baseDir = new File("src/test/resources/project1").getAbsoluteFile();
 
   @Before
   public void before() {

@@ -31,7 +31,7 @@ import java.util.List;
     key = GenericCoveragePlugin.REPORT_PATH_PROPERTY_KEY,
     category = "Generic Coverage",
     name = "Coverage report path",
-    description = "Path (absolute or relative) of the coverage report.",
+    description = "List of comma-separated paths (absolute or relative) containing coverage report.",
     project = true, global = false)
 })
 public class GenericCoveragePlugin extends SonarPlugin {

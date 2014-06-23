@@ -1,0 +1,10 @@
+<coverage version="1">
+  <file path="src/foobar.js">
+    <lineToCover lineNumber="2" covered="true"/>
+    <lineToCover lineNumber="3" covered="false"/>
+  </file>
+  <file path="src/helloworld.js">
+    <lineToCover lineNumber="2" covered="true"/>
+    <lineToCover lineNumber="3" covered="false"/>
+  </file>
+</coverage>

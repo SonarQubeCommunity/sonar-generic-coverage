@@ -20,6 +20,8 @@
 package org.sonar.plugins.coverage.generic;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +33,8 @@ import org.sonar.api.scan.filesystem.ModuleFileSystem;
 import org.sonar.api.utils.SonarException;
 
 import javax.xml.stream.XMLStreamException;
-
 import java.io.File;
+import java.util.List;
 
 public class GenericCoverageSensor implements Sensor {
 
@@ -55,28 +57,37 @@ public class GenericCoverageSensor implements Sensor {
     return settings.getString(GenericCoveragePlugin.REPORT_PATH_PROPERTY_KEY);
   }
 
+  private List<String> reportPaths() {
+    return Lists.newArrayList(Splitter.on(",").trimResults().omitEmptyStrings().split(reportPath()));
+  }
+
   @Override
   public void analyse(Project project, SensorContext context) {
-    File reportFile = new File(reportPath());
-    if (!reportFile.isAbsolute()) {
-      reportFile = new File(fs.baseDir(), reportPath());
-    }
-    String reportAbsolutePath = reportFile.getAbsolutePath();
-    LOG.info("Parsing " + reportAbsolutePath);
+    ReportParser parser = new ReportParser(new ResourceLocator(project, fs), context);
+    List<String> strings = reportPaths();
+    while (!strings.isEmpty()) {
+      String path = strings.remove(0);
+      File reportFile = new File(path);
+      if (!reportFile.isAbsolute()) {
+        reportFile = new File(fs.baseDir(), path);
+      }
+      String reportAbsolutePath = reportFile.getAbsolutePath();
+      LOG.info("Parsing " + reportAbsolutePath);
 
-    if (!reportFile.exists()) {
-      LOG.warn("Cannot find coverage report to parse: " + reportAbsolutePath);
-      return;
-    }
+      if (!reportFile.exists()) {
+        LOG.warn("Cannot find coverage report to parse: " + reportAbsolutePath);
+        return;
+      }
 
-    ReportParser parser;
-    try {
-      parser = ReportParser.parse(reportFile, new ResourceLocator(project, fs), context);
-    } catch (XMLStreamException e) {
-      throw new SonarException("Cannot parse generic coverage report " + reportAbsolutePath, e);
-    } catch (ReportParsingException e) {
-      throw new SonarException("Error at line " + e.lineNumber() + " of generic coverage report " + reportAbsolutePath, e);
+      try {
+        parser.parse(reportFile);
+      } catch (XMLStreamException e) {
+        throw new SonarException("Cannot parse generic coverage report " + reportAbsolutePath, e);
+      } catch (ReportParsingException e) {
+        throw new SonarException("Error at line " + e.lineNumber() + " of generic coverage report " + reportAbsolutePath, e);
+      }
     }
+    parser.saveMeasures();
 
     LOG.info("Imported coverage data for " + parser.numberOfMatchedFiles() + " files");
     int numberOfUnknownFiles = parser.numberOfUnknownFiles();

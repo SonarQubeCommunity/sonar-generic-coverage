@@ -67,9 +67,9 @@ public class GenericCoverageSensorTest {
 
   @Mock
   private Appender<ILoggingEvent> mockAppender;
-  private List<ILoggingEvent> loggingEvents = Lists.newArrayList();
+  private final List<ILoggingEvent> loggingEvents = Lists.newArrayList();
 
-  private File baseDir = new File("src/test/resources/project1").getAbsoluteFile();
+  private final File baseDir = new File("src/test/resources/project1").getAbsoluteFile();
 
   @Before
   public void before() {
@@ -120,12 +120,40 @@ public class GenericCoverageSensorTest {
   }
 
   @Test
+  public void analyse_report_with_multiple_relative_path() throws Exception {
+    configureReportPath("coverage.xml,coverage2.xml");
+    org.sonar.api.resources.File resource1 = addFileToContext("src/test/resources/project1/src/foobar.js");
+    org.sonar.api.resources.File resource2 = addFileToContext("src/test/resources/project1/src/helloworld.js");
+    sensor.analyse(project, context);
+    verify(context, times(3)).saveMeasure(eq(resource1), any(Measure.class));
+    verify(context, times(3)).saveMeasure(eq(resource2), any(Measure.class));
+
+    assertThat(loggingEvents.get(0).getMessage()).contains("Parsing").contains("coverage.xml");
+    assertThat(loggingEvents.get(1).getMessage()).contains("Parsing").contains("coverage2.xml");
+    assertThat(loggingEvents.get(2).getMessage()).contains("Imported coverage data for 2 file");
+  }
+
+  @Test
   public void analyse_report_with_absolute_path() throws Exception {
     File reportFile = new File(baseDir, "coverage.xml");
     configureReportPath(reportFile.getAbsolutePath());
     org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
     sensor.analyse(project, context);
     verify(context, times(3)).saveMeasure(eq(resource), any(Measure.class));
+  }
+
+  @Test
+  public void analyse_report_with_multiple_absolute_path() throws Exception {
+    configureReportPath(new File(baseDir, "coverage.xml").getAbsolutePath() + "," +  new File(baseDir, "coverage2.xml").getAbsolutePath());
+    org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
+    org.sonar.api.resources.File resource2 = addFileToContext("src/test/resources/project1/src/helloworld.js");
+    sensor.analyse(project, context);
+    verify(context, times(3)).saveMeasure(eq(resource), any(Measure.class));
+    verify(context, times(3)).saveMeasure(eq(resource2), any(Measure.class));
+
+    assertThat(loggingEvents.get(0).getMessage()).contains("Parsing").contains("coverage.xml");
+    assertThat(loggingEvents.get(1).getMessage()).contains("Parsing").contains("coverage2.xml");
+    assertThat(loggingEvents.get(2).getMessage()).contains("Imported coverage data for 2 file");
   }
 
   @Test

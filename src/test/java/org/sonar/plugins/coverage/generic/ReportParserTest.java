@@ -78,17 +78,37 @@ public class ReportParserTest {
     File file = fileWithoutBranch;
     addFileToContext(file);
     ReportParser parser = parseReportFile("src/test/resources/coverage.xml");
+    parser.saveMeasures();
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
-    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.LINES_TO_COVER, 3.)));
-    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.UNCOVERED_LINES, 1.)));
-    verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA, ImmutableMap.of(2, 0, 3, 1, 5, 1)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.LINES_TO_COVER, 4.)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.UNCOVERED_LINES, 2.)));
+    verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA, ImmutableMap.of(2, 0, 3, 1, 5, 1, 6, 0)));
   }
 
   @Test
   public void file_with_branches() throws Exception {
     File file = fileWithBranches;
     addFileToContext(file);
-    parseReportFile("src/test/resources/coverage.xml");
+    ReportParser parser = parseReportFile("src/test/resources/coverage.xml");
+    assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
+    parser.saveMeasures();
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.LINES_TO_COVER, 2.)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.UNCOVERED_LINES, 0.)));
+    verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA, ImmutableMap.of(3, 1, 4, 1)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.CONDITIONS_TO_COVER, 10.)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.UNCOVERED_CONDITIONS, 5.)));
+    verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.CONDITIONS_BY_LINE, ImmutableMap.of(3, 8, 4, 2)));
+    verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.COVERED_CONDITIONS_BY_LINE, ImmutableMap.of(3, 5, 4, 0)));
+  }
+
+  @Test
+  public void files_with_branches_merge() throws Exception {
+    File file = fileWithBranches;
+    addFileToContext(file);
+    ReportParser parser = parseReportFile("src/test/resources/coverage.xml");
+    parser.parse(new java.io.File("src/test/resources/coverage2.xml"));
+    parser.saveMeasures();
+    assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
     verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.LINES_TO_COVER, 2.)));
     verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.UNCOVERED_LINES, 0.)));
     verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.COVERAGE_LINE_HITS_DATA, ImmutableMap.of(3, 1, 4, 1)));
@@ -147,8 +167,8 @@ public class ReportParserTest {
     parseReportString("<coverage version=\"1\"><file path=\"file1\"><lineToCover lineNumber=\"0\" covered=\"true\"/></file></coverage>");
   }
 
-  @Test(expected = ReportParsingException.class)
-  public void lineNumber_in_lineToCover_should_appear_several_times_for_same_file() throws Exception {
+  @Test
+  public void lineNumber_in_lineToCover_can_appear_several_times_for_same_file() throws Exception {
     addFileToContext(setupFile("file1"));
     parseReportString("<coverage version=\"1\"><file path=\"file1\">"
       + "<lineToCover lineNumber=\"1\" covered=\"true\"/>"
@@ -203,9 +223,11 @@ public class ReportParserTest {
   }
 
   @Test(expected = ReportParsingException.class)
-  public void same_file_appearing_multiple_times() throws Exception {
+  public void coveredBranches_should_not_mismatch_on_merged_reports() throws Exception {
     addFileToContext(setupFile("file1"));
-    parseReportString("<coverage version=\"1\"><file path=\"file1\"/><file path=\"file1\"/></coverage>");
+    parseReportString("<coverage version=\"1\"><file path=\"file1\">"
+      + "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"2\" coveredBranches=\"1\"/>" +
+      "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"3\" coveredBranches=\"1\"/></file></coverage>");
   }
 
   @Test(expected = SonarException.class)
@@ -217,13 +239,17 @@ public class ReportParserTest {
     when(context.getResource(file1)).thenReturn(file1);
   }
 
-  private void parseReportString(String string) throws Exception {
+  private ReportParser parseReportString(String string) throws Exception {
     ByteArrayInputStream inputStream = new ByteArrayInputStream(string.getBytes());
-    ReportParser.parse(inputStream, resourceLocator, context);
+    ReportParser reportParser = new ReportParser(resourceLocator, context);
+    reportParser.parse(inputStream);
+    return reportParser;
   }
 
   private ReportParser parseReportFile(String reportLocation) throws Exception {
-    return ReportParser.parse(new java.io.File(reportLocation), resourceLocator, context);
+    ReportParser reportParser = new ReportParser(resourceLocator, context);
+    reportParser.parse(new java.io.File(reportLocation));
+    return reportParser;
   }
 
   private Measure dataMeasure(Metric metric, Map<Integer, Integer> data) {

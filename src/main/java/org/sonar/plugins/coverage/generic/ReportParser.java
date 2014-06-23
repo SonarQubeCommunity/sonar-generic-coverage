@@ -24,18 +24,18 @@ import com.google.common.collect.Sets;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.sonar.api.batch.SensorContext;
-import org.sonar.api.measures.CoverageMeasuresBuilder;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.resources.File;
 import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.StaxParser;
 
 import javax.xml.stream.XMLStreamException;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ReportParser {
@@ -47,28 +47,20 @@ public class ReportParser {
 
   private static final int MAX_STORED_UNKNOWN_FILE_PATHS = 5;
 
-  private final InputStream inputStream;
   private final ResourceLocator resourceLocator;
   private final SensorContext context;
+  private final Map<File, CustomCoverageMeasuresBuilder> measures = new HashMap<File, CustomCoverageMeasuresBuilder>();
 
-  private int numberOfMatchedFiles;
   private int numberOfUnknownFiles;
-  private List<String> firstUnknownFiles = Lists.newArrayList();
-  private Set<String> matchedFileKeys = Sets.newHashSet();
+  private final List<String> firstUnknownFiles = Lists.newArrayList();
+  private final Set<String> matchedFileKeys = Sets.newHashSet();
 
-  public ReportParser(InputStream inputStream, ResourceLocator resourceLocator, SensorContext context) throws XMLStreamException {
-    this.inputStream = inputStream;
+  public ReportParser(ResourceLocator resourceLocator, SensorContext context) {
     this.resourceLocator = resourceLocator;
     this.context = context;
-    parse();
   }
 
-  public static ReportParser parse(InputStream inputStream, ResourceLocator resourceLocator, SensorContext context)
-    throws XMLStreamException {
-    return new ReportParser(inputStream, resourceLocator, context);
-  }
-
-  public static ReportParser parse(java.io.File reportFile, ResourceLocator resourceLocator, SensorContext context)
+  public void parse(java.io.File reportFile)
     throws XMLStreamException {
     InputStream inputStream;
     try {
@@ -76,10 +68,10 @@ public class ReportParser {
     } catch (FileNotFoundException e) {
       throw new SonarException(e);
     }
-    return parse(inputStream, resourceLocator, context);
+    parse(inputStream);
   }
 
-  private void parse() throws XMLStreamException {
+  public void parse(InputStream inputStream) throws XMLStreamException {
     StaxParser parser = new StaxParser(new StaxParser.XmlStreamHandler() {
       @Override
       public void stream(SMHierarchicCursor rootCursor) throws XMLStreamException {
@@ -112,37 +104,34 @@ public class ReportParser {
         }
         continue;
       }
-      addMatchedFile(resource, filePath, fileCursor);
+      matchedFileKeys.add(resource.getKey());
 
-      CoverageMeasuresBuilder measureBuilder = CoverageMeasuresBuilder.create();
+      CustomCoverageMeasuresBuilder measureBuilder = getCoverageMeasuresBuilder(resource);
 
       SMInputCursor lineToCoverCursor = fileCursor.childElementCursor();
       Set<Integer> parsedLineNumbers = Sets.newHashSet();
       while (lineToCoverCursor.getNext() != null) {
         parseLineToCover(measureBuilder, lineToCoverCursor, parsedLineNumbers);
       }
-
-      for (Measure measure : measureBuilder.createMeasures()) {
-        context.saveMeasure(resource, measure);
-      }
-      numberOfMatchedFiles++;
     }
   }
 
-  private void addMatchedFile(File resource, String filePath, SMInputCursor cursor) throws XMLStreamException {
-    boolean added = matchedFileKeys.add(resource.getKey());
-    if (!added) {
-      throw new ReportParsingException("Coverage data cannot be added multiples times for the same file: " + filePath, cursor);
+  private CustomCoverageMeasuresBuilder getCoverageMeasuresBuilder(File resource) {
+    CustomCoverageMeasuresBuilder measureBuilder = measures.get(resource);
+    if (measureBuilder == null) {
+      measureBuilder = CustomCoverageMeasuresBuilder.create();
+      measures.put(resource, measureBuilder);
     }
+    return measureBuilder;
   }
 
-  private void parseLineToCover(CoverageMeasuresBuilder measureBuilder, SMInputCursor cursor, Set<Integer> parsedLineNumbers)
+  private void parseLineToCover(CustomCoverageMeasuresBuilder measureBuilder, SMInputCursor cursor, Set<Integer> parsedLineNumbers)
     throws XMLStreamException {
 
     checkElementName(cursor, "lineToCover");
     String lineNumberAsString = mandatoryAttribute(cursor, LINE_NUMBER_ATTR);
     int lineNumber = intValue(lineNumberAsString, cursor, LINE_NUMBER_ATTR, 1);
-    addParsedLineNumber(parsedLineNumbers, lineNumber, cursor);
+    parsedLineNumbers.add(lineNumber);
 
     String coveredAsString = mandatoryAttribute(cursor, COVERED_ATTR);
     if (!"true".equalsIgnoreCase(coveredAsString) && !"false".equalsIgnoreCase(coveredAsString)) {
@@ -162,15 +151,9 @@ public class ReportParser {
           throw new ReportParsingException("\"coveredBranches\" should not be greater than \"branchesToCover\"", cursor);
         }
       }
-      measureBuilder.setConditions(lineNumber, branchesToCover, coveredBranches);
-    }
-  }
-
-  private void addParsedLineNumber(Set<Integer> parsedLineNumbers, int lineNumber, SMInputCursor cursor) throws XMLStreamException {
-    boolean added = parsedLineNumbers.add(lineNumber);
-    if (!added) {
-      String message = "Coverage data cannot be added multiple times for the same line number (" + lineNumber + ") of the same file";
-      throw new ReportParsingException(message, cursor);
+      if (measureBuilder.setConditions(lineNumber, branchesToCover, coveredBranches) == null) {
+        throw new ReportParsingException("\"branchesToCover\" mismatch between two different reports", cursor);
+      }
     }
   }
 
@@ -212,7 +195,7 @@ public class ReportParser {
   }
 
   public int numberOfMatchedFiles() {
-    return numberOfMatchedFiles;
+    return matchedFileKeys.size();
   }
 
   public int numberOfUnknownFiles() {
@@ -223,4 +206,11 @@ public class ReportParser {
     return firstUnknownFiles;
   }
 
+  public void saveMeasures() {
+    for (Map.Entry<org.sonar.api.resources.File, CustomCoverageMeasuresBuilder> entry : measures.entrySet()) {
+      for (Measure measure : entry.getValue().createMeasures()) {
+        context.saveMeasure(entry.getKey(), measure);
+      }
+    }
+  }
 }
