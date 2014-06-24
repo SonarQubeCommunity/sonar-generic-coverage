@@ -39,7 +39,9 @@ public class CustomCoverageMeasuresBuilderTest {
   public void shouldCreateHitsByLineData() {
     CustomCoverageMeasuresBuilder builder = CustomCoverageMeasuresBuilder.create();
     builder.setHits(1, 0);
+    builder.setHits(1, 0); // equal set
     builder.setHits(2, 3);
+    builder.setHits(2, 0); // ignore
     builder.setHits(4, 2);
     assertThat(find(builder.createMeasures(), CoreMetrics.COVERAGE_LINE_HITS_DATA_KEY).getData()).isEqualTo("1=0;2=3;4=2");
     assertThat(builder.getCoveredLines()).isEqualTo(2);
@@ -52,6 +54,18 @@ public class CustomCoverageMeasuresBuilderTest {
     builder.setHits(2, 3);
     builder.setHits(3, 0);
     assertThat(find(builder.createMeasures(), CoreMetrics.UNCOVERED_LINES_KEY).getIntValue()).isEqualTo(2);
+    assertThat(builder.getCoveredLines()).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldCreateITLinesMetrics() {
+    CustomCoverageMeasuresBuilder builder = CustomCoverageMeasuresBuilder.create().setIT(true);
+    builder.setHits(1, 0);
+    builder.setHits(2, 3);
+    builder.setHits(3, 0);
+    assertThat(find(builder.createMeasures(), CoreMetrics.IT_COVERAGE_LINE_HITS_DATA_KEY).getData()).isEqualTo("1=0;2=3;3=0");
+    assertThat(find(builder.createMeasures(), CoreMetrics.IT_UNCOVERED_LINES_KEY).getIntValue()).isEqualTo(2);
+    assertThat(find(builder.createMeasures(), CoreMetrics.IT_LINES_TO_COVER_KEY).getIntValue()).isEqualTo(3);
     assertThat(builder.getCoveredLines()).isEqualTo(1);
   }
 
@@ -88,6 +102,18 @@ public class CustomCoverageMeasuresBuilderTest {
     builder.setConditions(2, 1, 0);
     assertThat(find(builder.createMeasures(), CoreMetrics.CONDITIONS_BY_LINE_KEY).getData()).isEqualTo("2=1");
     assertThat(find(builder.createMeasures(), CoreMetrics.COVERED_CONDITIONS_BY_LINE_KEY).getData()).isEqualTo("2=0");
+  }
+
+  @Test
+  public void shouldCreateNumberITMetrics() {
+    CustomCoverageMeasuresBuilder builder = CustomCoverageMeasuresBuilder.create().setIT(true);
+    builder.setConditions(1, 2, 2);
+    builder.setConditions(2, 1, 0);
+    builder.setConditions(3, 3, 1);
+    assertThat(find(builder.createMeasures(), CoreMetrics.IT_CONDITIONS_BY_LINE_KEY).getData()).isEqualTo("1=2;2=1;3=3");
+    assertThat(find(builder.createMeasures(), CoreMetrics.IT_COVERED_CONDITIONS_BY_LINE_KEY).getData()).isEqualTo("1=2;2=0;3=1");
+    assertThat(find(builder.createMeasures(), CoreMetrics.IT_CONDITIONS_TO_COVER_KEY).getIntValue()).isEqualTo(6);
+    assertThat(find(builder.createMeasures(), CoreMetrics.IT_UNCOVERED_CONDITIONS_KEY).getIntValue()).isEqualTo(3);
   }
 
   @Test

@@ -21,6 +21,7 @@ package org.sonar.plugins.coverage.generic;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -50,21 +51,33 @@ public class GenericCoverageSensor implements Sensor {
 
   @Override
   public boolean shouldExecuteOnProject(Project project) {
-    return StringUtils.isNotEmpty(reportPath());
+    return StringUtils.isNotEmpty(reportPath()) || StringUtils.isNotEmpty(itReportPath());
   }
 
   private String reportPath() {
     return settings.getString(GenericCoveragePlugin.REPORT_PATH_PROPERTY_KEY);
   }
 
-  private List<String> reportPaths() {
-    return Lists.newArrayList(Splitter.on(",").trimResults().omitEmptyStrings().split(reportPath()));
+  private String itReportPath() {
+    return settings.getString(GenericCoveragePlugin.IT_REPORT_PATH_PROPERTY_KEY);
+  }
+
+  private List<String> getList(String string) {
+    return string == null ? ImmutableList.<String>of() : Lists.newArrayList(Splitter.on(",").trimResults().omitEmptyStrings().split(string));
   }
 
   @Override
   public void analyse(Project project, SensorContext context) {
-    ReportParser parser = new ReportParser(new ResourceLocator(project, fs), context);
-    List<String> strings = reportPaths();
+    boolean ok = loadCoverage(project, context, false, reportPath());
+    if (ok) {
+      loadCoverage(project, context, true, itReportPath());
+    }
+  }
+
+  public boolean loadCoverage(Project project, SensorContext context, boolean isIT, String reportPath) {
+    String it = isIT ? "IT " : "";
+    ReportParser parser = new ReportParser(new ResourceLocator(project, fs), context, isIT);
+    List<String> strings = getList(reportPath);
     while (!strings.isEmpty()) {
       String path = strings.remove(0);
       File reportFile = new File(path);
@@ -75,26 +88,27 @@ public class GenericCoverageSensor implements Sensor {
       LOG.info("Parsing " + reportAbsolutePath);
 
       if (!reportFile.exists()) {
-        LOG.warn("Cannot find coverage report to parse: " + reportAbsolutePath);
-        return;
+        LOG.warn("Cannot find " + it + "coverage report to parse: " + reportAbsolutePath);
+        return false;
       }
 
       try {
         parser.parse(reportFile);
       } catch (XMLStreamException e) {
-        throw new SonarException("Cannot parse generic coverage report " + reportAbsolutePath, e);
+        throw new SonarException("Cannot parse " + it + "generic coverage report " + reportAbsolutePath, e);
       } catch (ReportParsingException e) {
-        throw new SonarException("Error at line " + e.lineNumber() + " of generic coverage report " + reportAbsolutePath, e);
+        throw new SonarException("Error at line " + e.lineNumber() + " of " + it + "generic coverage report " + reportAbsolutePath, e);
       }
     }
     parser.saveMeasures();
 
-    LOG.info("Imported coverage data for " + parser.numberOfMatchedFiles() + " files");
+    LOG.info("Imported " + it + "coverage data for " + parser.numberOfMatchedFiles() + " files");
     int numberOfUnknownFiles = parser.numberOfUnknownFiles();
     if (numberOfUnknownFiles > 0) {
       String fileList = Joiner.on("\n").join(parser.firstUnknownFiles());
-      LOG.info("Coverage data ignored for " + numberOfUnknownFiles + " unknown files, including:\n" + fileList);
+      LOG.info(it + "Coverage data ignored for " + numberOfUnknownFiles + " unknown files, including:\n" + fileList);
     }
+    return true;
   }
 
   @Override

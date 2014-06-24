@@ -100,37 +100,48 @@ public class GenericCoverageSensorTest {
   public void should_execute_when_report_path_is_provided() throws Exception {
     configureReportPath("my-report");
     assertThat(sensor.shouldExecuteOnProject(project)).isTrue();
+    configureReportPath("");
+    configureITReportPath("my-report");
+    assertThat(sensor.shouldExecuteOnProject(project)).isTrue();
   }
 
   @Test
   public void should_not_execute_when_report_path_is_empty() throws Exception {
     configureReportPath("");
+    configureITReportPath("");
     assertThat(sensor.shouldExecuteOnProject(project)).isFalse();
   }
 
   @Test
   public void analyse_report_with_relative_path() throws Exception {
     configureReportPath("coverage.xml");
+    configureITReportPath("coverage.xml");
     org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
     sensor.analyse(project, context);
-    verify(context, times(3)).saveMeasure(eq(resource), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource), any(Measure.class));
 
     assertThat(loggingEvents.get(0).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(loggingEvents.get(1).getMessage()).contains("Imported coverage data for 1 file");
+    assertThat(loggingEvents.get(2).getMessage()).contains("Parsing ").contains("coverage.xml");
+    assertThat(loggingEvents.get(3).getMessage()).contains("Imported IT coverage data for 1 file");
   }
 
   @Test
   public void analyse_report_with_multiple_relative_path() throws Exception {
     configureReportPath("coverage.xml,coverage2.xml");
+    configureITReportPath("coverage.xml,coverage2.xml");
     org.sonar.api.resources.File resource1 = addFileToContext("src/test/resources/project1/src/foobar.js");
     org.sonar.api.resources.File resource2 = addFileToContext("src/test/resources/project1/src/helloworld.js");
     sensor.analyse(project, context);
-    verify(context, times(3)).saveMeasure(eq(resource1), any(Measure.class));
-    verify(context, times(3)).saveMeasure(eq(resource2), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource1), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource2), any(Measure.class));
 
     assertThat(loggingEvents.get(0).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(loggingEvents.get(1).getMessage()).contains("Parsing").contains("coverage2.xml");
     assertThat(loggingEvents.get(2).getMessage()).contains("Imported coverage data for 2 file");
+    assertThat(loggingEvents.get(3).getMessage()).contains("Parsing").contains("coverage.xml");
+    assertThat(loggingEvents.get(4).getMessage()).contains("Parsing").contains("coverage2.xml");
+    assertThat(loggingEvents.get(5).getMessage()).contains("Imported IT coverage data for 2 file");
   }
 
   @Test
@@ -145,30 +156,41 @@ public class GenericCoverageSensorTest {
   @Test
   public void analyse_report_with_multiple_absolute_path() throws Exception {
     configureReportPath(new File(baseDir, "coverage.xml").getAbsolutePath() + "," +  new File(baseDir, "coverage2.xml").getAbsolutePath());
+    configureITReportPath(new File(baseDir, "coverage.xml").getAbsolutePath() + "," +  new File(baseDir, "coverage2.xml").getAbsolutePath());
     org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
     org.sonar.api.resources.File resource2 = addFileToContext("src/test/resources/project1/src/helloworld.js");
     sensor.analyse(project, context);
-    verify(context, times(3)).saveMeasure(eq(resource), any(Measure.class));
-    verify(context, times(3)).saveMeasure(eq(resource2), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource2), any(Measure.class));
 
     assertThat(loggingEvents.get(0).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(loggingEvents.get(1).getMessage()).contains("Parsing").contains("coverage2.xml");
     assertThat(loggingEvents.get(2).getMessage()).contains("Imported coverage data for 2 file");
+    assertThat(loggingEvents.get(3).getMessage()).contains("Parsing").contains("coverage.xml");
+    assertThat(loggingEvents.get(4).getMessage()).contains("Parsing").contains("coverage2.xml");
+    assertThat(loggingEvents.get(5).getMessage()).contains("Imported IT coverage data for 2 file");
   }
 
   @Test
   public void analyse_report_with_unknown_files() throws Exception {
     configureReportPath("coverage_with_2_unknown_files.xml");
+    configureITReportPath("coverage_with_2_unknown_files.xml");
     sensor.analyse(project, context);
     assertThat(loggingEvents.get(2).getMessage()).contains("Coverage data ignored for 2 unknown files");
+    assertThat(loggingEvents.get(5).getMessage()).contains("IT Coverage data ignored for 2 unknown files");
   }
 
   @Test
   public void analyse_report_with_7_unknown_files() throws Exception {
     configureReportPath("coverage_with_7_unknown_files.xml");
+    configureITReportPath("coverage_with_7_unknown_files.xml");
     sensor.analyse(project, context);
     String message = loggingEvents.get(2).getMessage();
     assertThat(message).contains("Coverage data ignored for 7 unknown files");
+    assertThat(message).contains("unknown1.js");
+    assertThat(Splitter.on("\n").split(message)).hasSize(6);
+    message = loggingEvents.get(5).getMessage();
+    assertThat(message).contains("IT Coverage data ignored for 7 unknown files");
     assertThat(message).contains("unknown1.js");
     assertThat(Splitter.on("\n").split(message)).hasSize(6);
   }
@@ -180,6 +202,12 @@ public class GenericCoverageSensorTest {
     verifyZeroInteractions(context);
     assertThat(loggingEvents.get(1).getLevel()).isEqualTo(Level.WARN);
     assertThat(loggingEvents.get(1).getMessage()).contains("Cannot find");
+    configureReportPath("");
+    configureITReportPath("xxx");
+    sensor.analyse(project, context);
+    verifyZeroInteractions(context);
+    assertThat(loggingEvents.get(4).getLevel()).isEqualTo(Level.WARN);
+    assertThat(loggingEvents.get(4).getMessage()).contains("Cannot find IT");
   }
 
   @Test(expected = SonarException.class)
@@ -189,8 +217,20 @@ public class GenericCoverageSensorTest {
   }
 
   @Test(expected = SonarException.class)
+  public void it_analyse_txt_report() throws Exception {
+    configureITReportPath("not-xml.txt");
+    sensor.analyse(project, context);
+  }
+
+  @Test(expected = SonarException.class)
   public void analyse_invalid_report() throws Exception {
     configureReportPath("invalid-coverage.xml");
+    sensor.analyse(project, context);
+  }
+
+  @Test(expected = SonarException.class)
+  public void it_analyse_invalid_report() throws Exception {
+    configureITReportPath("invalid-coverage.xml");
     sensor.analyse(project, context);
   }
 
@@ -201,6 +241,10 @@ public class GenericCoverageSensorTest {
 
   private void configureReportPath(String reportPath) {
     when(settings.getString(GenericCoveragePlugin.REPORT_PATH_PROPERTY_KEY)).thenReturn(reportPath);
+  }
+
+  private void configureITReportPath(String itReportPath) {
+    when(settings.getString(GenericCoveragePlugin.IT_REPORT_PATH_PROPERTY_KEY)).thenReturn(itReportPath);
   }
 
   private org.sonar.api.resources.File addFileToContext(String filePath) {

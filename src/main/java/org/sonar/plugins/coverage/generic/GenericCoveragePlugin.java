@@ -32,11 +32,18 @@ import java.util.List;
     category = "Generic Coverage",
     name = "Coverage report path",
     description = "List of comma-separated paths (absolute or relative) containing coverage report.",
+    project = true, global = false),
+  @Property(
+    key = GenericCoveragePlugin.IT_REPORT_PATH_PROPERTY_KEY,
+    category = "Generic Coverage",
+    name = "Integration tests coverage report path",
+    description = "List of comma-separated paths (absolute or relative) containing integration tests coverage report.",
     project = true, global = false)
 })
 public class GenericCoveragePlugin extends SonarPlugin {
 
   public static final String REPORT_PATH_PROPERTY_KEY = "sonar.genericcoverage.reportPath";
+  public static final String IT_REPORT_PATH_PROPERTY_KEY = "sonar.genericcoverage.itReportPath";
 
   @Override
   public List getExtensions() {

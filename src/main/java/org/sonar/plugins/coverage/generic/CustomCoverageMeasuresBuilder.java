@@ -19,23 +19,49 @@
  */
 package org.sonar.plugins.coverage.generic;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
+import org.sonar.api.measures.Metric;
 import org.sonar.api.measures.PersistenceMode;
 import org.sonar.api.utils.KeyValueFormat;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.SortedMap;
 
 public final class CustomCoverageMeasuresBuilder {
+
+  private static enum METRIC {
+    LINES_TO_COVER, UNCOVERED_LINES, COVERAGE_LINE_HITS_DATA, CONDITIONS_TO_COVER, UNCOVERED_CONDITIONS, COVERED_CONDITIONS_BY_LINE, CONDITIONS_BY_LINE
+  }
+
+  private static final Map<METRIC, Metric> defaultKeys = ImmutableMap.<METRIC, Metric>builder()
+    .put(METRIC.LINES_TO_COVER, CoreMetrics.LINES_TO_COVER)
+    .put(METRIC.UNCOVERED_LINES, CoreMetrics.UNCOVERED_LINES)
+    .put(METRIC.COVERAGE_LINE_HITS_DATA, CoreMetrics.COVERAGE_LINE_HITS_DATA)
+    .put(METRIC.CONDITIONS_TO_COVER, CoreMetrics.CONDITIONS_TO_COVER)
+    .put(METRIC.UNCOVERED_CONDITIONS, CoreMetrics.UNCOVERED_CONDITIONS)
+    .put(METRIC.COVERED_CONDITIONS_BY_LINE, CoreMetrics.COVERED_CONDITIONS_BY_LINE)
+    .put(METRIC.CONDITIONS_BY_LINE, CoreMetrics.CONDITIONS_BY_LINE).build();
+
+  private static final Map<METRIC, Metric> itKeys = ImmutableMap.<METRIC, Metric>builder()
+    .put(METRIC.LINES_TO_COVER, CoreMetrics.IT_LINES_TO_COVER)
+    .put(METRIC.UNCOVERED_LINES, CoreMetrics.IT_UNCOVERED_LINES)
+    .put(METRIC.COVERAGE_LINE_HITS_DATA, CoreMetrics.IT_COVERAGE_LINE_HITS_DATA)
+    .put(METRIC.CONDITIONS_TO_COVER, CoreMetrics.IT_CONDITIONS_TO_COVER)
+    .put(METRIC.UNCOVERED_CONDITIONS, CoreMetrics.IT_UNCOVERED_CONDITIONS)
+    .put(METRIC.COVERED_CONDITIONS_BY_LINE, CoreMetrics.IT_COVERED_CONDITIONS_BY_LINE)
+    .put(METRIC.CONDITIONS_BY_LINE, CoreMetrics.IT_CONDITIONS_BY_LINE).build();
 
   private int totalCoveredLines = 0, totalConditions = 0, totalCoveredConditions = 0;
   private final SortedMap<Integer, Integer> hitsByLine = Maps.newTreeMap();
   private final SortedMap<Integer, Integer> conditionsByLine = Maps.newTreeMap();
   private final SortedMap<Integer, Integer> coveredConditionsByLine = Maps.newTreeMap();
+  private Map<METRIC, Metric> metrics = defaultKeys;
 
   private CustomCoverageMeasuresBuilder() {
     // use the factory
@@ -59,20 +85,23 @@ public final class CustomCoverageMeasuresBuilder {
 
   public CustomCoverageMeasuresBuilder setConditions(int lineId, int conditions, int coveredConditions) {
     if (conditions > 0) {
+      int coveredNewValue;
+      int totalCoveredDiff;
       if (conditionsByLine.containsKey(lineId)) {
         if (conditions != conditionsByLine.get(lineId)) {
           return null;
         }
         int oldValue = coveredConditionsByLine.get(lineId);
-        int newValue = Math.max(oldValue, coveredConditions);
-        coveredConditionsByLine.put(lineId, newValue);
-        totalCoveredConditions += Math.abs(oldValue - newValue);
+        coveredNewValue = Math.max(oldValue, coveredConditions);
+        totalCoveredDiff = Math.abs(oldValue - coveredNewValue);
       } else {
         totalConditions += conditions;
-        totalCoveredConditions += coveredConditions;
+        totalCoveredDiff = coveredConditions;
         conditionsByLine.put(lineId, conditions);
-        coveredConditionsByLine.put(lineId, coveredConditions);
+        coveredNewValue = coveredConditions;
       }
+      coveredConditionsByLine.put(lineId, coveredNewValue);
+      totalCoveredConditions += totalCoveredDiff;
     }
     return this;
   }
@@ -108,13 +137,13 @@ public final class CustomCoverageMeasuresBuilder {
   public Collection<Measure> createMeasures() {
     Collection<Measure> measures = Lists.newArrayList();
     if (getLinesToCover() > 0) {
-      measures.add(new Measure(CoreMetrics.LINES_TO_COVER, (double) getLinesToCover()));
-      measures.add(new Measure(CoreMetrics.UNCOVERED_LINES, (double) (getLinesToCover() - getCoveredLines())));
-      measures.add(new Measure(CoreMetrics.COVERAGE_LINE_HITS_DATA).setData(KeyValueFormat.format(hitsByLine)).setPersistenceMode(PersistenceMode.DATABASE));
+      measures.add(new Measure(metrics.get(METRIC.LINES_TO_COVER), (double) getLinesToCover()));
+      measures.add(new Measure(metrics.get(METRIC.UNCOVERED_LINES), (double) (getLinesToCover() - getCoveredLines())));
+      measures.add(new Measure(metrics.get(METRIC.COVERAGE_LINE_HITS_DATA)).setData(KeyValueFormat.format(hitsByLine)).setPersistenceMode(PersistenceMode.DATABASE));
     }
     if (getConditions() > 0) {
-      measures.add(new Measure(CoreMetrics.CONDITIONS_TO_COVER, (double) getConditions()));
-      measures.add(new Measure(CoreMetrics.UNCOVERED_CONDITIONS, (double) (getConditions() - getCoveredConditions())));
+      measures.add(new Measure(metrics.get(METRIC.CONDITIONS_TO_COVER), (double) getConditions()));
+      measures.add(new Measure(metrics.get(METRIC.UNCOVERED_CONDITIONS), (double) (getConditions() - getCoveredConditions())));
       measures.add(createConditionsByLine());
       measures.add(createCoveredConditionsByLine());
     }
@@ -122,18 +151,25 @@ public final class CustomCoverageMeasuresBuilder {
   }
 
   private Measure createCoveredConditionsByLine() {
-    return new Measure(CoreMetrics.COVERED_CONDITIONS_BY_LINE)
+    return new Measure(metrics.get(METRIC.COVERED_CONDITIONS_BY_LINE))
       .setData(KeyValueFormat.format(coveredConditionsByLine))
       .setPersistenceMode(PersistenceMode.DATABASE);
   }
 
   private Measure createConditionsByLine() {
-    return new Measure(CoreMetrics.CONDITIONS_BY_LINE)
+    return new Measure(metrics.get(METRIC.CONDITIONS_BY_LINE))
       .setData(KeyValueFormat.format(conditionsByLine))
       .setPersistenceMode(PersistenceMode.DATABASE);
   }
 
   public static CustomCoverageMeasuresBuilder create() {
     return new CustomCoverageMeasuresBuilder();
+  }
+
+  public CustomCoverageMeasuresBuilder setIT(boolean isIT) {
+    if (isIT) {
+      metrics = itKeys;
+    }
+    return this;
   }
 }

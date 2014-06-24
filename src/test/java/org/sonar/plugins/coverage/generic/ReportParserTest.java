@@ -118,6 +118,23 @@ public class ReportParserTest {
     verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.COVERED_CONDITIONS_BY_LINE, ImmutableMap.of(3, 7, 4, 0)));
   }
 
+  @Test
+  public void it_files_with_branches_merge() throws Exception {
+    File file = fileWithBranches;
+    addFileToContext(file);
+    ReportParser parser = parseReportFile("src/test/resources/coverage.xml", true);
+    parser.parse(new java.io.File("src/test/resources/coverage2.xml"));
+    parser.saveMeasures();
+    assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.IT_LINES_TO_COVER, 2.)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.IT_UNCOVERED_LINES, 0.)));
+    verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.IT_COVERAGE_LINE_HITS_DATA, ImmutableMap.of(3, 1, 4, 1)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.IT_CONDITIONS_TO_COVER, 10.)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.IT_UNCOVERED_CONDITIONS, 3.)));
+    verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.IT_CONDITIONS_BY_LINE, ImmutableMap.of(3, 8, 4, 2)));
+    verify(context).saveMeasure(eq(file), dataMeasure(CoreMetrics.IT_COVERED_CONDITIONS_BY_LINE, ImmutableMap.of(3, 7, 4, 0)));
+  }
+
   @Test(expected = ReportParsingException.class)
   public void invalid_root_node_name() throws Exception {
     parseReportString("<mycoverage version=\"1\"></mycoverage>");
@@ -241,13 +258,17 @@ public class ReportParserTest {
 
   private ReportParser parseReportString(String string) throws Exception {
     ByteArrayInputStream inputStream = new ByteArrayInputStream(string.getBytes());
-    ReportParser reportParser = new ReportParser(resourceLocator, context);
+    ReportParser reportParser = new ReportParser(resourceLocator, context, false);
     reportParser.parse(inputStream);
     return reportParser;
   }
 
   private ReportParser parseReportFile(String reportLocation) throws Exception {
-    ReportParser reportParser = new ReportParser(resourceLocator, context);
+    return parseReportFile(reportLocation, false);
+  }
+
+  private ReportParser parseReportFile(String reportLocation, boolean it) throws Exception {
+    ReportParser reportParser = new ReportParser(resourceLocator, context, it);
     reportParser.parse(new java.io.File(reportLocation));
     return reportParser;
   }

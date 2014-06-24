@@ -49,15 +49,17 @@ public class ReportParser {
 
   private final ResourceLocator resourceLocator;
   private final SensorContext context;
+  private final boolean isIT;
   private final Map<File, CustomCoverageMeasuresBuilder> measures = new HashMap<File, CustomCoverageMeasuresBuilder>();
 
   private int numberOfUnknownFiles;
   private final List<String> firstUnknownFiles = Lists.newArrayList();
   private final Set<String> matchedFileKeys = Sets.newHashSet();
 
-  public ReportParser(ResourceLocator resourceLocator, SensorContext context) {
+  public ReportParser(ResourceLocator resourceLocator, SensorContext context, boolean isIT) {
     this.resourceLocator = resourceLocator;
     this.context = context;
+    this.isIT = isIT;
   }
 
   public void parse(java.io.File reportFile)
@@ -119,7 +121,7 @@ public class ReportParser {
   private CustomCoverageMeasuresBuilder getCoverageMeasuresBuilder(File resource) {
     CustomCoverageMeasuresBuilder measureBuilder = measures.get(resource);
     if (measureBuilder == null) {
-      measureBuilder = CustomCoverageMeasuresBuilder.create();
+      measureBuilder = CustomCoverageMeasuresBuilder.create().setIT(isIT);
       measures.put(resource, measureBuilder);
     }
     return measureBuilder;
