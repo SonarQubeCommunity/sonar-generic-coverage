@@ -83,6 +83,7 @@ public class GenericCoverageSensorTest {
     ProjectFileSystem projectFs = mock(ProjectFileSystem.class);
     when(project.getFileSystem()).thenReturn(projectFs);
     when(projectFs.getSourceDirs()).thenReturn(ImmutableList.of(new File(baseDir, "src")));
+    when(projectFs.getTestDirs()).thenReturn(ImmutableList.of(new File(baseDir, "test")));
   }
 
   public void setupMockLogAppender() {
@@ -126,8 +127,10 @@ public class GenericCoverageSensorTest {
     configureITReportPath("coverage.xml");
     configureUTReportPath("unittest.xml");
     org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
+    org.sonar.api.resources.File testResource = addTestFileToContext("src/test/resources/project1/test/foobar_test.js");
     sensor.analyse(project, context);
-    verify(context, times(12)).saveMeasure(eq(resource), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(testResource), any(Measure.class));
 
     assertThat(loggingEvents.get(0).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(loggingEvents.get(1).getMessage()).contains("Imported coverage data for 1 file");
@@ -144,9 +147,13 @@ public class GenericCoverageSensorTest {
     configureUTReportPath("unittest.xml,unittest2.xml");
     org.sonar.api.resources.File resource1 = addFileToContext("src/test/resources/project1/src/foobar.js");
     org.sonar.api.resources.File resource2 = addFileToContext("src/test/resources/project1/src/helloworld.js");
+    org.sonar.api.resources.File testResource1 = addTestFileToContext("src/test/resources/project1/src/foobar_test.js");
+    org.sonar.api.resources.File testResource2 = addTestFileToContext("src/test/resources/project1/src/helloworld_test.js");
     sensor.analyse(project, context);
-    verify(context, times(12)).saveMeasure(eq(resource1), any(Measure.class));
-    verify(context, times(12)).saveMeasure(eq(resource2), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource1), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource2), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(testResource1), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(testResource2), any(Measure.class));
 
     assertThat(loggingEvents.get(0).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(loggingEvents.get(1).getMessage()).contains("Parsing").contains("coverage2.xml");
@@ -175,9 +182,13 @@ public class GenericCoverageSensorTest {
     configureUTReportPath(new File(baseDir, "unittest.xml").getAbsolutePath() + "," + new File(baseDir, "unittest2.xml").getAbsolutePath());
     org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
     org.sonar.api.resources.File resource2 = addFileToContext("src/test/resources/project1/src/helloworld.js");
+    org.sonar.api.resources.File testResource = addFileToContext("src/test/resources/project1/src/foobar_test.js");
+    org.sonar.api.resources.File testResource2 = addFileToContext("src/test/resources/project1/src/helloworld_test.js");
     sensor.analyse(project, context);
-    verify(context, times(12)).saveMeasure(eq(resource), any(Measure.class));
-    verify(context, times(12)).saveMeasure(eq(resource2), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(resource2), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(testResource), any(Measure.class));
+    verify(context, times(6)).saveMeasure(eq(testResource2), any(Measure.class));
 
     assertThat(loggingEvents.get(0).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(loggingEvents.get(1).getMessage()).contains("Parsing").contains("coverage2.xml");
@@ -298,6 +309,15 @@ public class GenericCoverageSensorTest {
 
   private org.sonar.api.resources.File addFileToContext(String filePath) {
     org.sonar.api.resources.File sonarFile = org.sonar.api.resources.File.fromIOFile(new File(filePath), project);
+    when(context.getResource(sonarFile)).thenReturn(sonarFile);
+    return sonarFile;
+  }
+
+  private org.sonar.api.resources.File addTestFileToContext(String filePath) {
+    org.sonar.api.resources.File sonarFile = org.sonar.api.resources.File.fromIOFile(new File(filePath), project);
+    if (sonarFile == null) {
+      sonarFile = org.sonar.api.resources.File.fromIOFile(new File(filePath), project.getFileSystem().getTestDirs());
+    }
     when(context.getResource(sonarFile)).thenReturn(sonarFile);
     return sonarFile;
   }

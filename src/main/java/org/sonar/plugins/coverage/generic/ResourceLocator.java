@@ -38,7 +38,12 @@ public class ResourceLocator {
     if (!javaFile.isAbsolute()) {
       javaFile = new java.io.File(fs.baseDir(), path);
     }
-    return File.fromIOFile(javaFile, project);
+    org.sonar.api.resources.File sonarFile = File.fromIOFile(javaFile, project);
+    if (sonarFile == null) {
+      // support SQ<4.2
+      sonarFile = File.fromIOFile(javaFile, project.getFileSystem().getTestDirs());
+    }
+    return sonarFile;
   }
 
 }

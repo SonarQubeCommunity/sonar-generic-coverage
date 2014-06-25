@@ -1,12 +1,12 @@
 <unitTest version="1">
-  <file path="src/foobar.js">
+  <file path="test/foobar_test.js">
     <testCase name="testA" duration="100"/>
     <testCase name="testB" duration="500"/>
     <testCase name="testC" duration="500">
       <failure message="short message">full stacktrace</failure>
     </testCase>
   </file>
-  <file path="src/helloworld.js">
+  <file path="test/helloworld_test.js">
     <testCase name="test1" duration="600"/>
     <testCase name="test2" duration="900">
       <error message="short message">full stacktrace</error>
