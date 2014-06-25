@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.Sensor;
 import org.sonar.api.batch.SensorContext;
+import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.config.Settings;
 import org.sonar.api.resources.Project;
 import org.sonar.api.scan.filesystem.ModuleFileSystem;
@@ -43,15 +44,17 @@ public class GenericCoverageSensor implements Sensor {
 
   private final Settings settings;
   private final ModuleFileSystem fs;
+  private final ResourcePerspectives perspectives;
 
-  public GenericCoverageSensor(Settings settings, ModuleFileSystem fs) {
+  public GenericCoverageSensor(Settings settings, ModuleFileSystem fs, ResourcePerspectives perspectives) {
     this.settings = settings;
     this.fs = fs;
+    this.perspectives = perspectives;
   }
 
   @Override
   public boolean shouldExecuteOnProject(Project project) {
-    return StringUtils.isNotEmpty(reportPath()) || StringUtils.isNotEmpty(itReportPath());
+    return StringUtils.isNotEmpty(reportPath()) || StringUtils.isNotEmpty(itReportPath()) || StringUtils.isNotEmpty(unitTestReportPath());
   }
 
   private String reportPath() {
@@ -62,21 +65,28 @@ public class GenericCoverageSensor implements Sensor {
     return settings.getString(GenericCoveragePlugin.IT_REPORT_PATH_PROPERTY_KEY);
   }
 
+  private String unitTestReportPath() {
+    return settings.getString(GenericCoveragePlugin.UNIT_TEST_REPORT_PATH_PROPERTY_KEY);
+  }
+
   private List<String> getList(String string) {
     return string == null ? ImmutableList.<String>of() : Lists.newArrayList(Splitter.on(",").trimResults().omitEmptyStrings().split(string));
   }
 
   @Override
   public void analyse(Project project, SensorContext context) {
-    boolean ok = loadCoverage(project, context, false, reportPath());
+    boolean ok = loadReport(project, context, ReportParser.Mode.COVERAGE, reportPath());
     if (ok) {
-      loadCoverage(project, context, true, itReportPath());
+      ok = loadReport(project, context, ReportParser.Mode.IT_COVERAGE, itReportPath());
+    }
+    if (ok) {
+      loadReport(project, context, ReportParser.Mode.UNITTEST, unitTestReportPath());
     }
   }
 
-  public boolean loadCoverage(Project project, SensorContext context, boolean isIT, String reportPath) {
-    String it = isIT ? "IT " : "";
-    ReportParser parser = new ReportParser(new ResourceLocator(project, fs), context, isIT);
+  public boolean loadReport(Project project, SensorContext context, ReportParser.Mode mode, String reportPath) {
+    String modeString = getModeString(mode);
+    ReportParser parser = new ReportParser(new ResourceLocator(project, fs), context, perspectives, mode);
     List<String> strings = getList(reportPath);
     while (!strings.isEmpty()) {
       String path = strings.remove(0);
@@ -88,27 +98,37 @@ public class GenericCoverageSensor implements Sensor {
       LOG.info("Parsing " + reportAbsolutePath);
 
       if (!reportFile.exists()) {
-        LOG.warn("Cannot find " + it + "coverage report to parse: " + reportAbsolutePath);
+        LOG.warn("Cannot find " + modeString + " report to parse: " + reportAbsolutePath);
         return false;
       }
 
       try {
         parser.parse(reportFile);
       } catch (XMLStreamException e) {
-        throw new SonarException("Cannot parse " + it + "generic coverage report " + reportAbsolutePath, e);
+        throw new SonarException("Cannot parse " + modeString + " report " + reportAbsolutePath, e);
       } catch (ReportParsingException e) {
-        throw new SonarException("Error at line " + e.lineNumber() + " of " + it + "generic coverage report " + reportAbsolutePath, e);
+        throw new SonarException("Error at line " + e.lineNumber() + " of " + modeString + " report " + reportAbsolutePath, e);
       }
     }
     parser.saveMeasures();
 
-    LOG.info("Imported " + it + "coverage data for " + parser.numberOfMatchedFiles() + " files");
+    LOG.info("Imported " + modeString + " data for " + parser.numberOfMatchedFiles() + " files");
     int numberOfUnknownFiles = parser.numberOfUnknownFiles();
     if (numberOfUnknownFiles > 0) {
       String fileList = Joiner.on("\n").join(parser.firstUnknownFiles());
-      LOG.info(it + "Coverage data ignored for " + numberOfUnknownFiles + " unknown files, including:\n" + fileList);
+      LOG.info(modeString + " data ignored for " + numberOfUnknownFiles + " unknown files, including:\n" + fileList);
     }
     return true;
+  }
+
+  private String getModeString(ReportParser.Mode mode) {
+    if (ReportParser.Mode.COVERAGE == mode) {
+      return "coverage";
+    } else if (ReportParser.Mode.IT_COVERAGE == mode) {
+      return "IT coverage";
+    } else {
+      return "unit test";
+    }
   }
 
   @Override

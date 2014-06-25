@@ -39,7 +39,7 @@ public final class CustomCoverageMeasuresBuilder {
     LINES_TO_COVER, UNCOVERED_LINES, COVERAGE_LINE_HITS_DATA, CONDITIONS_TO_COVER, UNCOVERED_CONDITIONS, COVERED_CONDITIONS_BY_LINE, CONDITIONS_BY_LINE
   }
 
-  private static final Map<METRIC, Metric> defaultKeys = ImmutableMap.<METRIC, Metric>builder()
+  private static final Map<METRIC, Metric> DEFAULT_KEYS = ImmutableMap.<METRIC, Metric>builder()
     .put(METRIC.LINES_TO_COVER, CoreMetrics.LINES_TO_COVER)
     .put(METRIC.UNCOVERED_LINES, CoreMetrics.UNCOVERED_LINES)
     .put(METRIC.COVERAGE_LINE_HITS_DATA, CoreMetrics.COVERAGE_LINE_HITS_DATA)
@@ -48,7 +48,7 @@ public final class CustomCoverageMeasuresBuilder {
     .put(METRIC.COVERED_CONDITIONS_BY_LINE, CoreMetrics.COVERED_CONDITIONS_BY_LINE)
     .put(METRIC.CONDITIONS_BY_LINE, CoreMetrics.CONDITIONS_BY_LINE).build();
 
-  private static final Map<METRIC, Metric> itKeys = ImmutableMap.<METRIC, Metric>builder()
+  private static final Map<METRIC, Metric> IT_KEYS = ImmutableMap.<METRIC, Metric>builder()
     .put(METRIC.LINES_TO_COVER, CoreMetrics.IT_LINES_TO_COVER)
     .put(METRIC.UNCOVERED_LINES, CoreMetrics.IT_UNCOVERED_LINES)
     .put(METRIC.COVERAGE_LINE_HITS_DATA, CoreMetrics.IT_COVERAGE_LINE_HITS_DATA)
@@ -61,7 +61,7 @@ public final class CustomCoverageMeasuresBuilder {
   private final SortedMap<Integer, Integer> hitsByLine = Maps.newTreeMap();
   private final SortedMap<Integer, Integer> conditionsByLine = Maps.newTreeMap();
   private final SortedMap<Integer, Integer> coveredConditionsByLine = Maps.newTreeMap();
-  private Map<METRIC, Metric> metrics = defaultKeys;
+  private Map<METRIC, Metric> metrics = DEFAULT_KEYS;
 
   private CustomCoverageMeasuresBuilder() {
     // use the factory
@@ -168,7 +168,7 @@ public final class CustomCoverageMeasuresBuilder {
 
   public CustomCoverageMeasuresBuilder setIT(boolean isIT) {
     if (isIT) {
-      metrics = itKeys;
+      metrics = IT_KEYS;
     }
     return this;
   }

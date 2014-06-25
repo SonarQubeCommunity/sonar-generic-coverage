@@ -19,13 +19,17 @@
  */
 package org.sonar.plugins.coverage.generic;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.sonar.api.batch.SensorContext;
+import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.resources.File;
+import org.sonar.api.resources.Resource;
+import org.sonar.api.test.MutableTestPlan;
 import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.StaxParser;
 
@@ -40,26 +44,41 @@ import java.util.Set;
 
 public class ReportParser {
 
+  public enum Mode {
+    COVERAGE, IT_COVERAGE, UNITTEST
+  }
+
+  private static final Map<Mode, String> ROOT_NODE = ImmutableMap.<Mode, String>builder()
+    .put(Mode.COVERAGE, "coverage")
+    .put(Mode.IT_COVERAGE, "coverage")
+    .put(Mode.UNITTEST, "unitTest").build();
+
   private static final String LINE_NUMBER_ATTR = "lineNumber";
   private static final String COVERED_ATTR = "covered";
   private static final String BRANCHES_TO_COVER_ATTR = "branchesToCover";
   private static final String COVERED_BRANCHES_ATTR = "coveredBranches";
+  private static final String NAME_ATTR = "name";
+  private static final String DURATION_ATTR = "duration";
+  private static final String MESSAGE_ATTR = "message";
 
   private static final int MAX_STORED_UNKNOWN_FILE_PATHS = 5;
 
   private final ResourceLocator resourceLocator;
   private final SensorContext context;
-  private final boolean isIT;
-  private final Map<File, CustomCoverageMeasuresBuilder> measures = new HashMap<File, CustomCoverageMeasuresBuilder>();
+  private final ResourcePerspectives perspectives;
+  private final Mode mode;
 
   private int numberOfUnknownFiles;
   private final List<String> firstUnknownFiles = Lists.newArrayList();
   private final Set<String> matchedFileKeys = Sets.newHashSet();
+  private final Map<File, CustomCoverageMeasuresBuilder> coverageMeasures = new HashMap<File, CustomCoverageMeasuresBuilder>();
+  private final Map<File, UnitTestMeasuresBuilder> unitTestMeasures = new HashMap<File, UnitTestMeasuresBuilder>();
 
-  public ReportParser(ResourceLocator resourceLocator, SensorContext context, boolean isIT) {
+  public ReportParser(ResourceLocator resourceLocator, SensorContext context, ResourcePerspectives perspectives, Mode mode) {
     this.resourceLocator = resourceLocator;
     this.context = context;
-    this.isIT = isIT;
+    this.perspectives = perspectives;
+    this.mode = mode;
   }
 
   public void parse(java.io.File reportFile)
@@ -74,6 +93,7 @@ public class ReportParser {
   }
 
   public void parse(InputStream inputStream) throws XMLStreamException {
+    reset();
     StaxParser parser = new StaxParser(new StaxParser.XmlStreamHandler() {
       @Override
       public void stream(SMHierarchicCursor rootCursor) throws XMLStreamException {
@@ -84,14 +104,58 @@ public class ReportParser {
     parser.parse(inputStream);
   }
 
+  private void reset() {
+    numberOfUnknownFiles = 0;
+    firstUnknownFiles.clear();
+    matchedFileKeys.clear();
+    coverageMeasures.clear();
+    unitTestMeasures.clear();
+  }
+
   private void parseRootNode(SMHierarchicCursor rootCursor) throws XMLStreamException {
-    checkElementName(rootCursor, "coverage");
+    checkElementName(rootCursor, ROOT_NODE.get(mode));
     String version = rootCursor.getAttrValue("version");
     if (!"1".equals(version)) {
       String message = "Unknown coverage version: " + version + ". This parser only handles version 1.";
       throw new ReportParsingException(message, rootCursor);
     }
-    parseFileMeasures(rootCursor.childElementCursor());
+    if (Mode.UNITTEST == mode) {
+      parseFileTests(rootCursor.childElementCursor());
+    } else {
+      parseFileMeasures(rootCursor.childElementCursor());
+    }
+  }
+
+  private void parseFileTests(SMInputCursor fileCursor) throws XMLStreamException {
+    while (fileCursor.getNext() != null) {
+      checkElementName(fileCursor, "file");
+      String filePath = mandatoryAttribute(fileCursor, "path");
+      File resource = resourceLocator.getResource(filePath);
+      if (context.getResource(resource) == null) {
+        numberOfUnknownFiles++;
+        if (numberOfUnknownFiles <= MAX_STORED_UNKNOWN_FILE_PATHS) {
+          firstUnknownFiles.add(filePath);
+        }
+        continue;
+      }
+      matchedFileKeys.add(resource.getKey());
+
+      UnitTestMeasuresBuilder measures = getUnitTestMeasuresBuilder(resource);
+
+      SMInputCursor testCaseCursor = fileCursor.childElementCursor();
+      while (testCaseCursor.getNext() != null) {
+        parseTestCase(measures, testCaseCursor);
+      }
+    }
+  }
+
+  private UnitTestMeasuresBuilder getUnitTestMeasuresBuilder(File resource) {
+    UnitTestMeasuresBuilder measuresBuilder = unitTestMeasures.get(resource);
+    if (measuresBuilder == null) {
+      measuresBuilder = UnitTestMeasuresBuilder.create();
+      unitTestMeasures.put(resource, measuresBuilder);
+    }
+    return measuresBuilder;
   }
 
   private void parseFileMeasures(SMInputCursor fileCursor) throws XMLStreamException {
@@ -111,29 +175,28 @@ public class ReportParser {
       CustomCoverageMeasuresBuilder measureBuilder = getCoverageMeasuresBuilder(resource);
 
       SMInputCursor lineToCoverCursor = fileCursor.childElementCursor();
-      Set<Integer> parsedLineNumbers = Sets.newHashSet();
       while (lineToCoverCursor.getNext() != null) {
-        parseLineToCover(measureBuilder, lineToCoverCursor, parsedLineNumbers);
+        parseLineToCover(measureBuilder, lineToCoverCursor);
       }
     }
   }
 
   private CustomCoverageMeasuresBuilder getCoverageMeasuresBuilder(File resource) {
-    CustomCoverageMeasuresBuilder measureBuilder = measures.get(resource);
-    if (measureBuilder == null) {
-      measureBuilder = CustomCoverageMeasuresBuilder.create().setIT(isIT);
-      measures.put(resource, measureBuilder);
+    CustomCoverageMeasuresBuilder measuresBuilder = coverageMeasures.get(resource);
+    if (measuresBuilder == null) {
+      measuresBuilder = CustomCoverageMeasuresBuilder.create();
+      measuresBuilder.setIT(Mode.IT_COVERAGE == mode);
+      coverageMeasures.put(resource, measuresBuilder);
     }
-    return measureBuilder;
+    return measuresBuilder;
   }
 
-  private void parseLineToCover(CustomCoverageMeasuresBuilder measureBuilder, SMInputCursor cursor, Set<Integer> parsedLineNumbers)
+  private void parseLineToCover(CustomCoverageMeasuresBuilder measureBuilder, SMInputCursor cursor)
     throws XMLStreamException {
 
     checkElementName(cursor, "lineToCover");
     String lineNumberAsString = mandatoryAttribute(cursor, LINE_NUMBER_ATTR);
     int lineNumber = intValue(lineNumberAsString, cursor, LINE_NUMBER_ATTR, 1);
-    parsedLineNumbers.add(lineNumber);
 
     String coveredAsString = mandatoryAttribute(cursor, COVERED_ATTR);
     if (!"true".equalsIgnoreCase(coveredAsString) && !"false".equalsIgnoreCase(coveredAsString)) {
@@ -157,6 +220,34 @@ public class ReportParser {
         throw new ReportParsingException("\"branchesToCover\" mismatch between two different reports", cursor);
       }
     }
+  }
+
+  private void parseTestCase(UnitTestMeasuresBuilder measure, SMInputCursor cursor) throws XMLStreamException {
+    checkElementName(cursor, "testCase");
+    String name = mandatoryAttribute(cursor, NAME_ATTR);
+    String status = TestCase.OK;
+    String durationAsString = mandatoryAttribute(cursor, DURATION_ATTR);
+    long duration = longValue(durationAsString, cursor, DURATION_ATTR, 0);
+
+    String message = null;
+    String stacktrace = null;
+    SMInputCursor child = cursor.descendantElementCursor();
+    if (child.getNext() != null) {
+      String elementName = child.getLocalName();
+      if (TestCase.SKIPPED.equals(elementName)) {
+        status = TestCase.SKIPPED;
+      } else if (TestCase.FAILURE.equals(elementName)) {
+        status = TestCase.FAILURE;
+      } else if (TestCase.ERROR.equals(elementName)) {
+        status = TestCase.ERROR;
+      }
+      if (!TestCase.OK.equals(status)) {
+        message = mandatoryAttribute(child, MESSAGE_ATTR);
+        stacktrace = child.collectDescendantText();
+      }
+    }
+
+    measure.setTestCase(name, status, duration, message, stacktrace);
   }
 
   private void checkElementName(SMInputCursor cursor, String expectedName) throws XMLStreamException {
@@ -192,6 +283,22 @@ public class ReportParser {
     return intValue;
   }
 
+  private long longValue(String stringValue, SMInputCursor cursor, String attributeName, long minimum) throws XMLStreamException {
+    long longValue;
+    try {
+      longValue = Long.valueOf(stringValue);
+    } catch (NumberFormatException e) {
+      String message = expectedMessage("long value", attributeName, stringValue);
+      throw new ReportParsingException(message, e, cursor.getCursorLocation().getLineNumber());
+    }
+    if (longValue < minimum) {
+      String message =
+        "Value of attribute \"" + attributeName + "\" is \"" + longValue + "\" but it should be greater than or equal to " + minimum;
+      throw new ReportParsingException(message, cursor);
+    }
+    return longValue;
+  }
+
   private String expectedMessage(String expected, String attributeName, String stringValue) {
     return "Expected " + expected + " for attribute \"" + attributeName + "\" but got \"" + stringValue + "\"";
   }
@@ -209,9 +316,38 @@ public class ReportParser {
   }
 
   public void saveMeasures() {
-    for (Map.Entry<org.sonar.api.resources.File, CustomCoverageMeasuresBuilder> entry : measures.entrySet()) {
+    if (mode == Mode.UNITTEST) {
+      saveUnitTestMeasures();
+    } else {
+      saveCoverageMeasure();
+    }
+  }
+
+  private void saveCoverageMeasure() {
+    for (Map.Entry<File, CustomCoverageMeasuresBuilder> entry : coverageMeasures.entrySet()) {
       for (Measure measure : entry.getValue().createMeasures()) {
         context.saveMeasure(entry.getKey(), measure);
+      }
+    }
+  }
+
+  private void saveUnitTestMeasures() {
+    for (Map.Entry<File, UnitTestMeasuresBuilder> entry : unitTestMeasures.entrySet()) {
+      Resource resource = entry.getKey();
+      UnitTestMeasuresBuilder measuresBuilder = entry.getValue();
+      for (Measure measure : measuresBuilder.createMeasures()) {
+        context.saveMeasure(resource, measure);
+      }
+      for (TestCase testCase : measuresBuilder.getTestCases()) {
+        MutableTestPlan testPlan = perspectives.as(MutableTestPlan.class, resource);
+        if (testPlan != null) {
+          testPlan.addTestCase(testCase.getName())
+            .setDurationInMs(testCase.getDuration())
+            .setStatus(org.sonar.api.test.TestCase.Status.of(testCase.getStatus()))
+            .setMessage(testCase.getMessage())
+            .setType(org.sonar.api.test.TestCase.TYPE_UNIT)
+            .setStackTrace(testCase.getStackTrace());
+        }
       }
     }
   }
