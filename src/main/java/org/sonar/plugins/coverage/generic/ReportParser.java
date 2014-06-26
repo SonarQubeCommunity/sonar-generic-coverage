@@ -173,11 +173,7 @@ public class ReportParser {
     String lineNumberAsString = mandatoryAttribute(cursor, LINE_NUMBER_ATTR);
     int lineNumber = intValue(lineNumberAsString, cursor, LINE_NUMBER_ATTR, 1);
 
-    String coveredAsString = mandatoryAttribute(cursor, COVERED_ATTR);
-    if (!"true".equalsIgnoreCase(coveredAsString) && !"false".equalsIgnoreCase(coveredAsString)) {
-      throw new ReportParsingException(expectedMessage("boolean value", COVERED_ATTR, coveredAsString), cursor);
-    }
-    boolean covered = Boolean.parseBoolean(coveredAsString);
+    boolean covered = getCoveredValue(cursor);
     measureBuilder.setHits(lineNumber, covered ? 1 : 0);
 
     String branchesToCoverAsString = cursor.getAttrValue(BRANCHES_TO_COVER_ATTR);
@@ -195,6 +191,14 @@ public class ReportParser {
         throw new ReportParsingException("\"branchesToCover\" mismatch between two different reports", cursor);
       }
     }
+  }
+
+  private boolean getCoveredValue(SMInputCursor cursor) throws XMLStreamException {
+    String coveredAsString = mandatoryAttribute(cursor, COVERED_ATTR);
+    if (!"true".equalsIgnoreCase(coveredAsString) && !"false".equalsIgnoreCase(coveredAsString)) {
+      throw new ReportParsingException(expectedMessage("boolean value", COVERED_ATTR, coveredAsString), cursor);
+    }
+    return Boolean.parseBoolean(coveredAsString);
   }
 
   private void parseTestCase(File resource, SMInputCursor cursor) throws XMLStreamException {
