@@ -19,6 +19,8 @@
     <testCase name="test2" duration="300">
       <failure message="short">stacktrace</failure>
     </testCase>
-    <testCase name="test3" duration="300" />
+    <testCase name="test3" duration="300">
+      <ok message="bar">foo</ok>
+    </testCase>
   </file>
 </unitTest>

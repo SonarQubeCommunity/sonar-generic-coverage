@@ -70,13 +70,13 @@ public final class UnitTestMeasuresBuilder {
 
   public java.util.Collection<Measure> createMeasures() {
     Collection<Measure> measures = Lists.newArrayList();
-    measures.add(new Measure(CoreMetrics.SKIPPED_TESTS, (double) skipped));
-    measures.add(new Measure(CoreMetrics.TESTS, (double) test));
-    measures.add(new Measure(CoreMetrics.TEST_ERRORS, (double) error));
-    measures.add(new Measure(CoreMetrics.TEST_FAILURES, (double) failure));
-    measures.add(new Measure(CoreMetrics.TEST_EXECUTION_TIME, (double) duration));
-    double passedTests = test - error - failure;
     if (test > 0) {
+      measures.add(new Measure(CoreMetrics.SKIPPED_TESTS, (double) skipped));
+      measures.add(new Measure(CoreMetrics.TESTS, (double) test));
+      measures.add(new Measure(CoreMetrics.TEST_ERRORS, (double) error));
+      measures.add(new Measure(CoreMetrics.TEST_FAILURES, (double) failure));
+      measures.add(new Measure(CoreMetrics.TEST_EXECUTION_TIME, (double) duration));
+      double passedTests = test - error - failure;
       double percentage = passedTests * 100d / test;
       measures.add(new Measure(CoreMetrics.TEST_SUCCESS_DENSITY, ParsingUtils.scaleValue(percentage)));
     }

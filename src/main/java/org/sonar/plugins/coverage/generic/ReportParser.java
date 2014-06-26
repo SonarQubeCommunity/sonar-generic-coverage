@@ -119,14 +119,10 @@ public class ReportParser {
       String message = "Unknown coverage version: " + version + ". This parser only handles version 1.";
       throw new ReportParsingException(message, rootCursor);
     }
-    if (Mode.UNITTEST == mode) {
-      parseFileTests(rootCursor.childElementCursor());
-    } else {
-      parseFileMeasures(rootCursor.childElementCursor());
-    }
+    parseFiles(rootCursor.childElementCursor());
   }
 
-  private void parseFileTests(SMInputCursor fileCursor) throws XMLStreamException {
+  private void parseFiles(SMInputCursor fileCursor) throws XMLStreamException {
     while (fileCursor.getNext() != null) {
       checkElementName(fileCursor, "file");
       String filePath = mandatoryAttribute(fileCursor, "path");
@@ -140,11 +136,13 @@ public class ReportParser {
       }
       matchedFileKeys.add(resource.getKey());
 
-      UnitTestMeasuresBuilder measures = getUnitTestMeasuresBuilder(resource);
-
       SMInputCursor testCaseCursor = fileCursor.childElementCursor();
       while (testCaseCursor.getNext() != null) {
-        parseTestCase(measures, testCaseCursor);
+        if (Mode.UNITTEST == mode) {
+          parseTestCase(resource, testCaseCursor);
+        } else {
+          parseLineToCover(resource, testCaseCursor);
+        }
       }
     }
   }
@@ -158,29 +156,6 @@ public class ReportParser {
     return measuresBuilder;
   }
 
-  private void parseFileMeasures(SMInputCursor fileCursor) throws XMLStreamException {
-    while (fileCursor.getNext() != null) {
-      checkElementName(fileCursor, "file");
-      String filePath = mandatoryAttribute(fileCursor, "path");
-      File resource = resourceLocator.getResource(filePath);
-      if (context.getResource(resource) == null) {
-        numberOfUnknownFiles++;
-        if (numberOfUnknownFiles <= MAX_STORED_UNKNOWN_FILE_PATHS) {
-          firstUnknownFiles.add(filePath);
-        }
-        continue;
-      }
-      matchedFileKeys.add(resource.getKey());
-
-      CustomCoverageMeasuresBuilder measureBuilder = getCoverageMeasuresBuilder(resource);
-
-      SMInputCursor lineToCoverCursor = fileCursor.childElementCursor();
-      while (lineToCoverCursor.getNext() != null) {
-        parseLineToCover(measureBuilder, lineToCoverCursor);
-      }
-    }
-  }
-
   private CustomCoverageMeasuresBuilder getCoverageMeasuresBuilder(File resource) {
     CustomCoverageMeasuresBuilder measuresBuilder = coverageMeasures.get(resource);
     if (measuresBuilder == null) {
@@ -191,9 +166,9 @@ public class ReportParser {
     return measuresBuilder;
   }
 
-  private void parseLineToCover(CustomCoverageMeasuresBuilder measureBuilder, SMInputCursor cursor)
+  private void parseLineToCover(File resource, SMInputCursor cursor)
     throws XMLStreamException {
-
+    CustomCoverageMeasuresBuilder measureBuilder = getCoverageMeasuresBuilder(resource);
     checkElementName(cursor, "lineToCover");
     String lineNumberAsString = mandatoryAttribute(cursor, LINE_NUMBER_ATTR);
     int lineNumber = intValue(lineNumberAsString, cursor, LINE_NUMBER_ATTR, 1);
@@ -222,7 +197,8 @@ public class ReportParser {
     }
   }
 
-  private void parseTestCase(UnitTestMeasuresBuilder measure, SMInputCursor cursor) throws XMLStreamException {
+  private void parseTestCase(File resource, SMInputCursor cursor) throws XMLStreamException {
+    UnitTestMeasuresBuilder measures = getUnitTestMeasuresBuilder(resource);
     checkElementName(cursor, "testCase");
     String name = mandatoryAttribute(cursor, NAME_ATTR);
     String status = TestCase.OK;
@@ -247,7 +223,7 @@ public class ReportParser {
       }
     }
 
-    measure.setTestCase(name, status, duration, message, stacktrace);
+    measures.setTestCase(name, status, duration, message, stacktrace);
   }
 
   private void checkElementName(SMInputCursor cursor, String expectedName) throws XMLStreamException {
