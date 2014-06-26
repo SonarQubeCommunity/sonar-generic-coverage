@@ -40,13 +40,13 @@ public final class UnitTestMeasuresBuilder {
 
   public void setTestCase(String name, String status, long duration, String message, String stacktrace) {
     if (!index.containsKey(name)) {
-      TestCase test = new TestCase();
-      test.setName(name)
+      TestCase testCase = new TestCase();
+      testCase.setName(name)
         .setStatus(status)
         .setDuration(duration)
         .setMessage(message)
         .setStackTrace(stacktrace);
-      index.put(name, test);
+      index.put(name, testCase);
 
       setCounter(status);
       this.duration += duration;

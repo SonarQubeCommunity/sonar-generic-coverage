@@ -28,7 +28,6 @@ import org.sonar.api.batch.SensorContext;
 import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.resources.File;
-import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.resources.Resource;
 import org.sonar.api.test.MutableTestPlan;
 import org.sonar.api.utils.SonarException;
@@ -132,11 +131,6 @@ public class ReportParser {
       checkElementName(fileCursor, "file");
       String filePath = mandatoryAttribute(fileCursor, "path");
       File resource = resourceLocator.getResource(filePath);
-      System.out.println("resource: " + resource);
-      if (resource != null) {
-        resource.setQualifier(Qualifiers.UNIT_TEST_FILE);
-        System.out.println("context.getresource: " + context.getResource(resource));
-      }
       if (context.getResource(resource) == null) {
         numberOfUnknownFiles++;
         if (numberOfUnknownFiles <= MAX_STORED_UNKNOWN_FILE_PATHS) {
