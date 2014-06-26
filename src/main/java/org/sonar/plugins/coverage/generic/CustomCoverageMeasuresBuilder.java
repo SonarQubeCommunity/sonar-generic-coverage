@@ -106,32 +106,33 @@ public final class CustomCoverageMeasuresBuilder {
     return this;
   }
 
-  public int getCoveredLines() {
-    return totalCoveredLines;
-  }
 
-  public int getLinesToCover() {
-    return hitsByLine.size();
+  public int getCoveredConditions() {
+    return totalCoveredConditions;
   }
 
   public int getConditions() {
     return totalConditions;
   }
 
-  public int getCoveredConditions() {
-    return totalCoveredConditions;
+  public int getLinesToCover() {
+    return hitsByLine.size();
   }
 
-  public SortedMap<Integer, Integer> getHitsByLine() {
-    return Collections.unmodifiableSortedMap(hitsByLine);
+  public int getCoveredLines() {
+    return totalCoveredLines;
+  }
+
+  public SortedMap<Integer, Integer> getCoveredConditionsByLine() {
+    return Collections.unmodifiableSortedMap(coveredConditionsByLine);
   }
 
   public SortedMap<Integer, Integer> getConditionsByLine() {
     return Collections.unmodifiableSortedMap(conditionsByLine);
   }
 
-  public SortedMap<Integer, Integer> getCoveredConditionsByLine() {
-    return Collections.unmodifiableSortedMap(coveredConditionsByLine);
+  public SortedMap<Integer, Integer> getHitsByLine() {
+    return Collections.unmodifiableSortedMap(hitsByLine);
   }
 
   public Collection<Measure> createMeasures() {
@@ -144,21 +145,15 @@ public final class CustomCoverageMeasuresBuilder {
     if (getConditions() > 0) {
       measures.add(new Measure(metrics.get(METRIC.CONDITIONS_TO_COVER), (double) getConditions()));
       measures.add(new Measure(metrics.get(METRIC.UNCOVERED_CONDITIONS), (double) (getConditions() - getCoveredConditions())));
-      measures.add(createConditionsByLine());
-      measures.add(createCoveredConditionsByLine());
+      measures.add(createMeasureByLine(conditionsByLine, METRIC.CONDITIONS_BY_LINE));
+      measures.add(createMeasureByLine(coveredConditionsByLine, METRIC.COVERED_CONDITIONS_BY_LINE));
     }
     return measures;
   }
 
-  private Measure createCoveredConditionsByLine() {
-    return new Measure(metrics.get(METRIC.COVERED_CONDITIONS_BY_LINE))
-      .setData(KeyValueFormat.format(coveredConditionsByLine))
-      .setPersistenceMode(PersistenceMode.DATABASE);
-  }
-
-  private Measure createConditionsByLine() {
-    return new Measure(metrics.get(METRIC.CONDITIONS_BY_LINE))
-      .setData(KeyValueFormat.format(conditionsByLine))
+  private Measure createMeasureByLine(SortedMap<Integer, Integer> lines, METRIC metric) {
+    return new Measure(metrics.get(metric))
+      .setData(KeyValueFormat.format(lines))
       .setPersistenceMode(PersistenceMode.DATABASE);
   }
 

@@ -25,6 +25,7 @@ import org.sonar.api.measures.Measure;
 import org.sonar.api.utils.ParsingUtils;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,6 +85,6 @@ public final class UnitTestMeasuresBuilder {
   }
 
   public Collection<TestCase> getTestCases() {
-    return index.values();
+    return Collections.unmodifiableCollection(index.values());
   }
 }
