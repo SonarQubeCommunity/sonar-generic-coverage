@@ -20,42 +20,67 @@
 package org.sonar.plugins.coverage.generic;
 
 import com.google.common.collect.ImmutableList;
-import org.sonar.api.Properties;
-import org.sonar.api.Property;
 import org.sonar.api.SonarPlugin;
+import org.sonar.api.config.PropertyDefinition;
+import org.sonar.api.resources.Qualifiers;
 
 import java.util.List;
 
-@Properties({
-  @Property(
-    key = GenericCoveragePlugin.REPORT_PATH_PROPERTY_KEY,
-    category = "Generic Coverage",
-    name = "Coverage report path",
-    description = "List of comma-separated paths (absolute or relative) containing coverage report.",
-    project = true, global = false),
-  @Property(
-    key = GenericCoveragePlugin.IT_REPORT_PATH_PROPERTY_KEY,
-    category = "Generic Coverage",
-    name = "Integration tests coverage report path",
-    description = "List of comma-separated paths (absolute or relative) containing integration tests coverage report.",
-    project = true, global = false),
-  @Property(
-    key = GenericCoveragePlugin.UNIT_TEST_REPORT_PATH_PROPERTY_KEY,
-    category = "Generic Coverage",
-    name = "Unit tests report path",
-    description = "List of comma-separated paths (absolute or relative) containing unit tests report.",
-    project = true, global = false)
-})
 public class GenericCoveragePlugin extends SonarPlugin {
 
-  public static final String REPORT_PATH_PROPERTY_KEY = "sonar.genericcoverage.reportPath";
-  public static final String IT_REPORT_PATH_PROPERTY_KEY = "sonar.genericcoverage.itReportPath";
-  public static final String UNIT_TEST_REPORT_PATH_PROPERTY_KEY = "sonar.genericcoverage.unitTestReportPath";
+  public static final String CATEGORY = "Generic Coverage";
+  public static final String OLD_REPORT_PATH_PROPERTY_KEY = "sonar.genericcoverage.reportPath";
+  public static final String REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.reportPaths";
+  public static final String IT_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.itReportPaths";
+  public static final String UNIT_TEST_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.unitTestReportPaths";
 
   @Override
   public List getExtensions() {
+    ImmutableList.Builder builder = ImmutableList.builder();
+    builder.add(GenericCoverageSensor.class);
+    builder.addAll(pluginProperties());
+    return builder.build();
+  }
+
+  private static ImmutableList<PropertyDefinition> pluginProperties() {
     return ImmutableList.of(
-      GenericCoverageSensor.class);
+
+      PropertyDefinition.builder(REPORT_PATHS_PROPERTY_KEY)
+        .name("Coverage report paths")
+        .description("List of comma-separated paths (absolute or relative) containing coverage report.")
+        .category(CATEGORY)
+        .onQualifiers(Qualifiers.PROJECT)
+        .build(),
+
+      PropertyDefinition.builder(IT_REPORT_PATHS_PROPERTY_KEY)
+        .name("Integration tests coverage report paths")
+        .description("List of comma-separated paths (absolute or relative) containing integration tests coverage report.")
+        .category(CATEGORY)
+        .onQualifiers(Qualifiers.PROJECT)
+        .build(),
+
+      PropertyDefinition.builder(UNIT_TEST_REPORT_PATHS_PROPERTY_KEY)
+        .name("Unit tests report paths")
+        .description("List of comma-separated paths (absolute or relative) containing unit tests report.")
+        .category(CATEGORY)
+        .onQualifiers(Qualifiers.PROJECT)
+        .build(),
+
+      deprecatedPropertyDefinition(OLD_REPORT_PATH_PROPERTY_KEY)
+    );
+  }
+
+  private static PropertyDefinition deprecatedPropertyDefinition(String oldKey) {
+    return PropertyDefinition
+      .builder(oldKey)
+      .name(oldKey)
+      .description("This property is deprecated and will be removed in a future version.<br />"
+        + "You should stop using it as soon as possible.<br />"
+        + "Consult the migration guide for guidance.")
+      .category("Generic Coverage")
+      .subCategory("Deprecated")
+      .onQualifiers(Qualifiers.PROJECT)
+      .build();
   }
 
 }

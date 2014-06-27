@@ -93,7 +93,6 @@ public class ReportParser {
   }
 
   public void parse(InputStream inputStream) throws XMLStreamException {
-    reset();
     StaxParser parser = new StaxParser(new StaxParser.XmlStreamHandler() {
       @Override
       public void stream(SMHierarchicCursor rootCursor) throws XMLStreamException {
@@ -102,14 +101,6 @@ public class ReportParser {
       }
     });
     parser.parse(inputStream);
-  }
-
-  private void reset() {
-    numberOfUnknownFiles = 0;
-    firstUnknownFiles.clear();
-    matchedFileKeys.clear();
-    coverageMeasures.clear();
-    unitTestMeasures.clear();
   }
 
   private void parseRootNode(SMHierarchicCursor rootCursor) throws XMLStreamException {

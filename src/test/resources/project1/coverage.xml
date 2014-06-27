@@ -3,4 +3,8 @@
     <lineToCover lineNumber="2" covered="false"/>
     <lineToCover lineNumber="3" covered="true"/>
   </file>
+  <file path="src/third.js">
+    <lineToCover lineNumber="2" covered="false"/>
+    <lineToCover lineNumber="3" covered="true"/>
+  </file>
 </coverage>

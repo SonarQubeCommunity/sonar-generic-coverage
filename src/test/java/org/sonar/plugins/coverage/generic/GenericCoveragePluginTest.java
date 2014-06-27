@@ -27,7 +27,7 @@ public class GenericCoveragePluginTest {
 
   @Test
   public void extensions() throws Exception {
-    assertThat(new GenericCoveragePlugin().getExtensions()).containsOnly(GenericCoverageSensor.class);
+    assertThat(new GenericCoveragePlugin().getExtensions()).hasSize(5);
   }
 
 }

@@ -21,6 +21,7 @@ package org.sonar.plugins.coverage.generic;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
@@ -58,15 +59,25 @@ public class GenericCoverageSensor implements Sensor {
   }
 
   private String reportPath() {
-    return settings.getString(GenericCoveragePlugin.REPORT_PATH_PROPERTY_KEY);
+    String result = settings.getString(GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
+    if (Strings.isNullOrEmpty(result)) {
+      result = settings.getString(GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY);
+    } else {
+      logDeprecatedPropertyUsage(GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY, GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
+    }
+    return result;
+  }
+
+  private static void logDeprecatedPropertyUsage(String newPropertyKey, String oldProperty) {
+    LOG.warn("Use the new property \"" + newPropertyKey + "\" instead of the deprecated \"" + oldProperty + "\"");
   }
 
   private String itReportPath() {
-    return settings.getString(GenericCoveragePlugin.IT_REPORT_PATH_PROPERTY_KEY);
+    return settings.getString(GenericCoveragePlugin.IT_REPORT_PATHS_PROPERTY_KEY);
   }
 
   private String unitTestReportPath() {
-    return settings.getString(GenericCoveragePlugin.UNIT_TEST_REPORT_PATH_PROPERTY_KEY);
+    return settings.getString(GenericCoveragePlugin.UNIT_TEST_REPORT_PATHS_PROPERTY_KEY);
   }
 
   private List<String> getList(String string) {
