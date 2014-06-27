@@ -41,8 +41,6 @@ import java.util.List;
 
 public class GenericCoverageSensor implements Sensor {
 
-  private static final Logger LOG = LoggerFactory.getLogger(GenericCoverageSensor.class);
-
   private final Settings settings;
   private final ModuleFileSystem fs;
   private final ResourcePerspectives perspectives;
@@ -55,21 +53,21 @@ public class GenericCoverageSensor implements Sensor {
 
   @Override
   public boolean shouldExecuteOnProject(Project project) {
-    return StringUtils.isNotEmpty(reportPath()) || StringUtils.isNotEmpty(itReportPath()) || StringUtils.isNotEmpty(unitTestReportPath());
+    return StringUtils.isNotEmpty(reportPath(null)) || StringUtils.isNotEmpty(itReportPath()) || StringUtils.isNotEmpty(unitTestReportPath());
   }
 
-  private String reportPath() {
+  private String reportPath(Logger logger) {
     String result = settings.getString(GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
     if (Strings.isNullOrEmpty(result)) {
       result = settings.getString(GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY);
-    } else {
-      logDeprecatedPropertyUsage(GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY, GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
+    } else if (logger != null) {
+      logDeprecatedPropertyUsage(logger, GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY, GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
     }
     return result;
   }
 
-  private static void logDeprecatedPropertyUsage(String newPropertyKey, String oldProperty) {
-    LOG.warn("Use the new property \"" + newPropertyKey + "\" instead of the deprecated \"" + oldProperty + "\"");
+  private static void logDeprecatedPropertyUsage(Logger logger, String newPropertyKey, String oldProperty) {
+    logger.warn("Use the new property \"" + newPropertyKey + "\" instead of the deprecated \"" + oldProperty + "\"");
   }
 
   private String itReportPath() {
@@ -86,16 +84,20 @@ public class GenericCoverageSensor implements Sensor {
 
   @Override
   public void analyse(Project project, SensorContext context) {
-    boolean ok = loadReport(project, context, ReportParser.Mode.COVERAGE, reportPath());
+    analyseWithLogger(project, context, LoggerFactory.getLogger(GenericCoverageSensor.class));
+  }
+
+  public void analyseWithLogger(Project project, SensorContext context, Logger logger) {
+    boolean ok = loadReport(project, context, logger, ReportParser.Mode.COVERAGE, reportPath(logger));
     if (ok) {
-      ok = loadReport(project, context, ReportParser.Mode.IT_COVERAGE, itReportPath());
+      ok = loadReport(project, context, logger, ReportParser.Mode.IT_COVERAGE, itReportPath());
     }
     if (ok) {
-      loadReport(project, context, ReportParser.Mode.UNITTEST, unitTestReportPath());
+      loadReport(project, context, logger, ReportParser.Mode.UNITTEST, unitTestReportPath());
     }
   }
 
-  public boolean loadReport(Project project, SensorContext context, ReportParser.Mode mode, String reportPath) {
+  public boolean loadReport(Project project, SensorContext context, Logger logger, ReportParser.Mode mode, String reportPath) {
     String modeString = getModeString(mode);
     ReportParser parser = new ReportParser(new ResourceLocator(project, fs), context, perspectives, mode);
     List<String> strings = getList(reportPath);
@@ -106,10 +108,10 @@ public class GenericCoverageSensor implements Sensor {
         reportFile = new File(fs.baseDir(), path);
       }
       String reportAbsolutePath = reportFile.getAbsolutePath();
-      LOG.info("Parsing " + reportAbsolutePath);
+      logger.info("Parsing " + reportAbsolutePath);
 
       if (!reportFile.exists()) {
-        LOG.warn("Cannot find " + modeString + " report to parse: " + reportAbsolutePath);
+        logger.warn("Cannot find " + modeString + " report to parse: " + reportAbsolutePath);
         return false;
       }
 
@@ -123,11 +125,11 @@ public class GenericCoverageSensor implements Sensor {
     }
     parser.saveMeasures();
 
-    LOG.info("Imported " + modeString + " data for " + parser.numberOfMatchedFiles() + " files");
+    logger.info("Imported " + modeString + " data for " + parser.numberOfMatchedFiles() + " files");
     int numberOfUnknownFiles = parser.numberOfUnknownFiles();
     if (numberOfUnknownFiles > 0) {
       String fileList = Joiner.on("\n").join(parser.firstUnknownFiles());
-      LOG.info(modeString + " data ignored for " + numberOfUnknownFiles + " unknown files, including:\n" + fileList);
+      logger.info(modeString + " data ignored for " + numberOfUnknownFiles + " unknown files, including:\n" + fileList);
     }
     return true;
   }
