@@ -8,6 +8,8 @@
       <failure message="short">stacktrace</failure>
     </testCase>
     <testCase name="test3" duration="300" />
-    <testCase name="test4" duration="300" />
+    <testCase name="test4" duration="300">
+      <ok message="aaa">long</ok>
+    </testCase>
   </file>
 </unitTest>
