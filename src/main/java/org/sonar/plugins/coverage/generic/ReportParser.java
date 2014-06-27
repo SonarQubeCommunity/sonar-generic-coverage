@@ -202,6 +202,7 @@ public class ReportParser {
 
     String message = null;
     String stacktrace = null;
+    int cursorLine = cursor.getCursorLocation().getLineNumber();
     SMInputCursor child = cursor.descendantElementCursor();
     if (child.getNext() != null) {
       String elementName = child.getLocalName();
@@ -218,7 +219,9 @@ public class ReportParser {
       }
     }
 
-    measures.setTestCase(name, status, duration, message, stacktrace);
+    if (!measures.setTestCase(name, status, duration, message, stacktrace)) {
+      throw new ReportParsingException("\"testCase\" with name " + name + " reported twice", cursorLine);
+    }
   }
 
   private void checkElementName(SMInputCursor cursor, String expectedName) throws XMLStreamException {

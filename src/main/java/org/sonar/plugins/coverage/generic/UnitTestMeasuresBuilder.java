@@ -39,8 +39,10 @@ public final class UnitTestMeasuresBuilder {
     // Use the factory
   }
 
-  public void setTestCase(String name, String status, long duration, String message, String stacktrace) {
-    if (!index.containsKey(name)) {
+  public boolean setTestCase(String name, String status, long duration, String message, String stacktrace) {
+    if (index.containsKey(name)) {
+      return false;
+    } else {
       TestCase testCase = new TestCase();
       testCase.setName(name)
         .setStatus(status)
@@ -51,6 +53,7 @@ public final class UnitTestMeasuresBuilder {
 
       setCounter(status);
       this.duration += duration;
+      return true;
     }
   }
 

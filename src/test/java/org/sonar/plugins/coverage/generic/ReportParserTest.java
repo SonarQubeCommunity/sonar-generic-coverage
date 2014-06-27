@@ -87,8 +87,8 @@ public class ReportParserTest {
     addFileToContext(file);
     ReportParser parser = parseReportFile("src/test/resources/unittest.xml", ReportParser.Mode.UNITTEST);
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
-    assertThat(parser.numberOfUnknownFiles()).isEqualTo(2);
-    assertThat(parser.firstUnknownFiles()).hasSize(2);
+    assertThat(parser.numberOfUnknownFiles()).isEqualTo(1);
+    assertThat(parser.firstUnknownFiles()).hasSize(1);
     verify(context, never()).saveMeasure(any(File.class), any(Measure.class));
   }
 
@@ -129,15 +129,15 @@ public class ReportParserTest {
 
     File file = fileWithBranches;
     addFileToContext(file);
-    ReportParser parser = parseReportFile("src/test/resources/unittest.xml", ReportParser.Mode.UNITTEST);
+    ReportParser parser = parseReportFile("src/test/resources/unittest2.xml", ReportParser.Mode.UNITTEST);
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
     parser.saveMeasures();
     verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.SKIPPED_TESTS, 1.)));
-    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.TESTS, 3.)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.TESTS, 4.)));
     verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.TEST_ERRORS, 0.)));
     verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.TEST_FAILURES, 1.)));
-    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.TEST_EXECUTION_TIME, 1100.)));
-    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.TEST_SUCCESS_DENSITY, 66.66)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.TEST_EXECUTION_TIME, 1400.)));
+    verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.TEST_SUCCESS_DENSITY, 75.)));
 
     verify(testPlan).addTestCase("test1");
     verify(testPlan).addTestCase("test2");
@@ -369,6 +369,22 @@ public class ReportParserTest {
     parseCoverageReport("<coverage version=\"1\"><file path=\"file1\">"
       + "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"2\" coveredBranches=\"1\"/>" +
       "<lineToCover lineNumber=\"1\" covered=\"true\" branchesToCover=\"3\" coveredBranches=\"1\"/></file></coverage>");
+  }
+
+  @Test(expected = ReportParsingException.class)
+  public void unittest_should_fail_on_overlap_testcases_reports() throws Exception {
+    addFileToContext(setupFile("file1"));
+    parseUnitTestReport("<unitTest version=\"1\"><file path=\"file1\">"
+      + "<testCase name=\"test1\" duration=\"35\"/>" +
+      "<testCase name=\"test1\" duration=\"35\"/></file></unitTest>");
+  }
+
+  @Test(expected = ReportParsingException.class)
+  public void unittest_should_fail_on_overlap_error_testcases_reports() throws Exception {
+    addFileToContext(setupFile("file1"));
+    parseUnitTestReport("<unitTest version=\"1\"><file path=\"file1\">"
+      + "<testCase name=\"test1\" duration=\"35\"><error message=\"ff\">ll</error></testCase>" +
+      "<testCase name=\"test1\" duration=\"35\"><error message=\"ff\">ll</error></testCase></file></unitTest>");
   }
 
   @Test(expected = SonarException.class)
