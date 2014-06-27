@@ -102,6 +102,12 @@ public class GenericCoverageSensorTest {
   }
 
   @Test
+  public void analyse_report_with_deprecated_key_and_no_logger() throws Exception {
+    configureOldReportPath("coverage.xml");
+    assertThat(sensor.shouldExecuteOnProject(project)).isTrue();
+  }
+
+  @Test
   public void analyse_report_with_deprecated_key() throws Exception {
     configureOldReportPath("coverage.xml");
     org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
