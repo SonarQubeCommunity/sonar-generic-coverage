@@ -28,7 +28,7 @@ import java.util.List;
 
 public class GenericCoveragePlugin extends SonarPlugin {
 
-  public static final String CATEGORY = "Generic Coverage";
+  private static final String CATEGORY = "Generic Coverage";
   public static final String OLD_REPORT_PATH_PROPERTY_KEY = "sonar.genericcoverage.reportPath";
   public static final String REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.reportPaths";
   public static final String IT_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.itReportPaths";

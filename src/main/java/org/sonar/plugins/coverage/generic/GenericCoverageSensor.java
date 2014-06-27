@@ -29,10 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.Sensor;
 import org.sonar.api.batch.SensorContext;
+import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.config.Settings;
 import org.sonar.api.resources.Project;
-import org.sonar.api.scan.filesystem.ModuleFileSystem;
 import org.sonar.api.utils.SonarException;
 
 import javax.xml.stream.XMLStreamException;
@@ -42,10 +42,10 @@ import java.util.List;
 public class GenericCoverageSensor implements Sensor {
 
   private final Settings settings;
-  private final ModuleFileSystem fs;
+  private final FileSystem fs;
   private final ResourcePerspectives perspectives;
 
-  public GenericCoverageSensor(Settings settings, ModuleFileSystem fs, ResourcePerspectives perspectives) {
+  public GenericCoverageSensor(Settings settings, FileSystem fs, ResourcePerspectives perspectives) {
     this.settings = settings;
     this.fs = fs;
     this.perspectives = perspectives;
@@ -97,7 +97,7 @@ public class GenericCoverageSensor implements Sensor {
     }
   }
 
-  public boolean loadReport(Project project, SensorContext context, Logger logger, ReportParser.Mode mode, String reportPath) {
+  private boolean loadReport(Project project, SensorContext context, Logger logger, ReportParser.Mode mode, String reportPath) {
     String modeString = getModeString(mode);
     ReportParser parser = new ReportParser(new ResourceLocator(project, fs), context, perspectives, mode);
     List<String> strings = getList(reportPath);

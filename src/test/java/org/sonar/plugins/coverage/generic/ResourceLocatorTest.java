@@ -24,9 +24,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.resources.Project;
 import org.sonar.api.resources.ProjectFileSystem;
-import org.sonar.api.scan.filesystem.ModuleFileSystem;
 
 import java.io.File;
 
@@ -39,7 +39,7 @@ public class ResourceLocatorTest {
   @Mock
   private Project project;
   @Mock
-  private ModuleFileSystem fs;
+  private FileSystem fs;
 
   private ResourceLocator locator;
 
@@ -52,18 +52,19 @@ public class ResourceLocatorTest {
     ProjectFileSystem projectFs = mock(ProjectFileSystem.class);
     when(project.getFileSystem()).thenReturn(projectFs);
     when(projectFs.getSourceDirs()).thenReturn(ImmutableList.of(new File(baseDir, "src")));
+    when(projectFs.getBasedir()).thenReturn(baseDir);
     locator = new ResourceLocator(project, fs);
   }
 
   @Test
   public void relative_path() throws Exception {
-    assertThat(locator.getResource("src/resources/MyFile.txt").getKey()).isEqualTo("resources/MyFile.txt");
+    assertThat(locator.getResource("src/resources/MyFile.txt").getKey()).isEqualTo("src/resources/MyFile.txt");
   }
 
   @Test
   public void absolute_path() throws Exception {
     String path = baseDir.getAbsolutePath() + "/src/resources/MyFile.txt";
-    assertThat(locator.getResource(path).getKey()).isEqualTo("resources/MyFile.txt");
+    assertThat(locator.getResource(path).getKey()).isEqualTo("src/resources/MyFile.txt");
   }
 
 }

@@ -19,16 +19,16 @@
  */
 package org.sonar.plugins.coverage.generic;
 
+import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.resources.File;
 import org.sonar.api.resources.Project;
-import org.sonar.api.scan.filesystem.ModuleFileSystem;
 
 public class ResourceLocator {
 
   private final Project project;
-  private final ModuleFileSystem fs;
+  private final FileSystem fs;
 
-  public ResourceLocator(Project project, ModuleFileSystem fs) {
+  public ResourceLocator(Project project, FileSystem fs) {
     this.project = project;
     this.fs = fs;
   }
@@ -38,12 +38,7 @@ public class ResourceLocator {
     if (!javaFile.isAbsolute()) {
       javaFile = new java.io.File(fs.baseDir(), path);
     }
-    org.sonar.api.resources.File sonarFile = File.fromIOFile(javaFile, project);
-    if (sonarFile == null) {
-      // support SQ<4.2
-      sonarFile = File.fromIOFile(javaFile, project.getFileSystem().getTestDirs());
-    }
-    return sonarFile;
+    return File.fromIOFile(javaFile, project);
   }
 
 }
