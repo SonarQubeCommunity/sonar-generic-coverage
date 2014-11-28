@@ -80,7 +80,7 @@ public final class UnitTestMeasuresBuilder {
       measures.add(new Measure(CoreMetrics.TEST_ERRORS, (double) error));
       measures.add(new Measure(CoreMetrics.TEST_FAILURES, (double) failure));
       measures.add(new Measure(CoreMetrics.TEST_EXECUTION_TIME, (double) duration));
-      double passedTests = test - error - failure;
+      double passedTests = (double)test - error - failure;
       double percentage = passedTests * 100d / test;
       measures.add(new Measure(CoreMetrics.TEST_SUCCESS_DENSITY, ParsingUtils.scaleValue(percentage)));
     }
