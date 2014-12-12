@@ -16,7 +16,7 @@
   <name>SonarQube Generic Coverage Plugin</name>
   <description>Imports coverage reports defined in the specified format. Coverage applied to files of any language.</description>
   <inceptionYear>2014</inceptionYear>
-  <url>http://docs.codehaus.org/display/SONAR/Generic+Test+Coverage</url>
+  <url>http://redirect.sonarsource.com/plugins/genericcoverage.html</url>
   <organization>
     <name>SonarSource</name>
     <url>http://www.sonarsource.com</url>
