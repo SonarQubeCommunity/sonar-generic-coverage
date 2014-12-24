@@ -19,15 +19,30 @@
  */
 package org.sonar.plugins.coverage.generic;
 
-import org.junit.Test;
+import org.sonar.api.config.Settings;
+import org.sonar.api.resources.Language;
 
-import static org.fest.assertions.Assertions.assertThat;
+public class OtherLanguage implements Language {
+  public static String KEY = "other";
 
-public class GenericCoveragePluginTest {
+  private final Settings settings;
 
-  @Test
-  public void extensions() throws Exception {
-    assertThat(new GenericCoveragePlugin().getExtensions()).hasSize(7);
+  public OtherLanguage(Settings settings) {
+    this.settings = settings;
   }
 
+  @Override
+  public String getKey() {
+    return KEY;
+  }
+
+  @Override
+  public String getName() {
+    return "Other";
+  }
+
+  @Override
+  public String[] getFileSuffixes() {
+    return settings.getStringArray(GenericCoveragePlugin.LANGUAGE_SUFFIXES_PROPERTY_KEY);
+  }
 }

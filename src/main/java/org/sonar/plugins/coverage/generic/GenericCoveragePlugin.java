@@ -33,11 +33,14 @@ public class GenericCoveragePlugin extends SonarPlugin {
   public static final String REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.reportPaths";
   public static final String IT_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.itReportPaths";
   public static final String UNIT_TEST_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.unitTestReportPaths";
+  public static final String LANGUAGE_SUFFIXES_PROPERTY_KEY = "sonar.genericcoverage.suffixes";
 
   @Override
   public List getExtensions() {
     ImmutableList.Builder builder = ImmutableList.builder();
     builder.add(GenericCoverageSensor.class);
+    builder.add(OtherLanguage.class);
+    builder.add(FileLinesSensor.class);
     builder.addAll(pluginProperties());
     return builder.build();
   }
@@ -64,6 +67,14 @@ public class GenericCoveragePlugin extends SonarPlugin {
         .description("List of comma-separated paths (absolute or relative) containing unit tests report.")
         .category(CATEGORY)
         .onQualifiers(Qualifiers.PROJECT)
+        .build(),
+
+      PropertyDefinition.builder(LANGUAGE_SUFFIXES_PROPERTY_KEY)
+        .name("Other File Suffixes")
+        .description("Comma-separated list of suffixes of Other files to analyze.")
+        .category(CATEGORY)
+        .onQualifiers(Qualifiers.PROJECT)
+        .defaultValue(".other")
         .build(),
 
       deprecatedPropertyDefinition(OLD_REPORT_PATH_PROPERTY_KEY)
