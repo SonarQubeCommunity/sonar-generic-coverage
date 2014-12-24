@@ -41,6 +41,7 @@ public class GenericCoveragePlugin extends SonarPlugin {
     builder.add(GenericCoverageSensor.class);
     builder.add(OtherLanguage.class);
     builder.add(FileLinesSensor.class);
+    builder.add(OtherLanguageProfile.class);
     builder.addAll(pluginProperties());
     return builder.build();
   }

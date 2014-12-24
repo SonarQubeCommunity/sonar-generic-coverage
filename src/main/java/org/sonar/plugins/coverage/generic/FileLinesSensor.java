@@ -21,6 +21,7 @@ package org.sonar.plugins.coverage.generic;
 
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
+import org.apache.commons.lang.StringUtils;
 import org.sonar.api.batch.Sensor;
 import org.sonar.api.batch.SensorContext;
 import org.sonar.api.batch.fs.FileSystem;
@@ -61,7 +62,7 @@ public class FileLinesSensor implements Sensor {
      }
      double total = 0;
      for (int line = 0; line < lines.size(); line++) {
-       int ncloc = Strings.isNullOrEmpty(lines.get(line)) ? 0 : 1;
+       int ncloc = StringUtils.isBlank(lines.get(line)) ? 0 : 1;
        fileLinesContext.setIntValue(CoreMetrics.NCLOC_DATA_KEY, line + 1, ncloc);
        total += ncloc;
      }
