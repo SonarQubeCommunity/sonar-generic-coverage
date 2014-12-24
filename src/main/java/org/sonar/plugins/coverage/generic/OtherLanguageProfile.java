@@ -19,15 +19,16 @@
  */
 package org.sonar.plugins.coverage.generic;
 
-import org.junit.Test;
+import org.sonar.api.profiles.ProfileDefinition;
+import org.sonar.api.profiles.RulesProfile;
+import org.sonar.api.utils.ValidationMessages;
 
-import static org.fest.assertions.Assertions.assertThat;
+public class OtherLanguageProfile extends ProfileDefinition {
+  private static final String NAME = "Sonar way";
 
-public class GenericCoveragePluginTest {
-
-  @Test
-  public void extensions() throws Exception {
-    assertThat(new GenericCoveragePlugin().getExtensions()).hasSize(9);
+  @Override
+  public final RulesProfile createProfile(ValidationMessages validation) {
+    return RulesProfile.create(NAME, OtherLanguage.KEY);
   }
 
 }
