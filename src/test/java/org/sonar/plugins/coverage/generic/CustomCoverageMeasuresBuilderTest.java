@@ -59,7 +59,7 @@ public class CustomCoverageMeasuresBuilderTest {
 
   @Test
   public void shouldCreateITLinesMetrics() {
-    CustomCoverageMeasuresBuilder builder = CustomCoverageMeasuresBuilder.create().setIT(true);
+    CustomCoverageMeasuresBuilder builder = CustomCoverageMeasuresBuilder.create().enableITMode();
     builder.setHits(1, 0);
     builder.setHits(2, 3);
     builder.setHits(3, 0);
@@ -106,7 +106,7 @@ public class CustomCoverageMeasuresBuilderTest {
 
   @Test
   public void shouldCreateNumberITMetrics() {
-    CustomCoverageMeasuresBuilder builder = CustomCoverageMeasuresBuilder.create().setIT(true);
+    CustomCoverageMeasuresBuilder builder = CustomCoverageMeasuresBuilder.create().enableITMode();
     builder.setConditions(1, 2, 2);
     builder.setConditions(2, 1, 0);
     builder.setConditions(3, 3, 1);

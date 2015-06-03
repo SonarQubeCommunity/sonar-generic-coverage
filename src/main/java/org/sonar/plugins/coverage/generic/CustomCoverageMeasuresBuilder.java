@@ -35,7 +35,7 @@ import java.util.SortedMap;
 
 public final class CustomCoverageMeasuresBuilder {
 
-  private static enum METRIC {
+  private enum METRIC {
     LINES_TO_COVER, UNCOVERED_LINES, COVERAGE_LINE_HITS_DATA, CONDITIONS_TO_COVER, UNCOVERED_CONDITIONS, COVERED_CONDITIONS_BY_LINE, CONDITIONS_BY_LINE
   }
 
@@ -161,10 +161,9 @@ public final class CustomCoverageMeasuresBuilder {
     return new CustomCoverageMeasuresBuilder();
   }
 
-  public CustomCoverageMeasuresBuilder setIT(boolean isIT) {
-    if (isIT) {
-      metrics = IT_KEYS;
-    }
+  public CustomCoverageMeasuresBuilder enableITMode() {
+    metrics = IT_KEYS;
     return this;
   }
+
 }

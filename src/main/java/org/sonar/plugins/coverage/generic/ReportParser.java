@@ -151,7 +151,9 @@ public class ReportParser {
     CustomCoverageMeasuresBuilder measuresBuilder = coverageMeasures.get(resource);
     if (measuresBuilder == null) {
       measuresBuilder = CustomCoverageMeasuresBuilder.create();
-      measuresBuilder.setIT(Mode.IT_COVERAGE == mode);
+      if (Mode.IT_COVERAGE == mode) {
+        measuresBuilder.enableITMode();
+      }
       coverageMeasures.put(resource, measuresBuilder);
     }
     return measuresBuilder;
@@ -184,7 +186,7 @@ public class ReportParser {
     }
   }
 
-  private boolean getCoveredValue(SMInputCursor cursor) throws XMLStreamException {
+  private static boolean getCoveredValue(SMInputCursor cursor) throws XMLStreamException {
     String coveredAsString = mandatoryAttribute(cursor, COVERED_ATTR);
     if (!"true".equalsIgnoreCase(coveredAsString) && !"false".equalsIgnoreCase(coveredAsString)) {
       throw new ReportParsingException(expectedMessage("boolean value", COVERED_ATTR, coveredAsString), cursor);
@@ -241,7 +243,7 @@ public class ReportParser {
     return attributeValue;
   }
 
-  private int intValue(String stringValue, SMInputCursor cursor, String attributeName, int minimum) throws XMLStreamException {
+  private static int intValue(String stringValue, SMInputCursor cursor, String attributeName, int minimum) throws XMLStreamException {
     int intValue;
     try {
       intValue = Integer.valueOf(stringValue);
@@ -257,7 +259,7 @@ public class ReportParser {
     return intValue;
   }
 
-  private long longValue(String stringValue, SMInputCursor cursor, String attributeName, long minimum) throws XMLStreamException {
+  private static long longValue(String stringValue, SMInputCursor cursor, String attributeName, long minimum) throws XMLStreamException {
     long longValue;
     try {
       longValue = Long.valueOf(stringValue);
