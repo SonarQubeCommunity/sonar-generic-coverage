@@ -78,7 +78,7 @@ public class GenericCoverageSensor implements Sensor {
     return settings.getString(GenericCoveragePlugin.UNIT_TEST_REPORT_PATHS_PROPERTY_KEY);
   }
 
-  private List<String> getList(String string) {
+  private static List<String> getList(String string) {
     return string == null ? ImmutableList.<String>of() : Lists.newArrayList(Splitter.on(",").trimResults().omitEmptyStrings().split(string));
   }
 
@@ -134,7 +134,7 @@ public class GenericCoverageSensor implements Sensor {
     return true;
   }
 
-  private String getModeString(ReportParser.Mode mode) {
+  private static String getModeString(ReportParser.Mode mode) {
     if (ReportParser.Mode.COVERAGE == mode) {
       return "coverage";
     } else if (ReportParser.Mode.IT_COVERAGE == mode) {

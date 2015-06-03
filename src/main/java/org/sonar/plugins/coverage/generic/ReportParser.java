@@ -224,7 +224,7 @@ public class ReportParser {
     }
   }
 
-  private void checkElementName(SMInputCursor cursor, String expectedName) throws XMLStreamException {
+  private static void checkElementName(SMInputCursor cursor, String expectedName) throws XMLStreamException {
     String elementName = cursor.getLocalName();
     if (!expectedName.equals(elementName)) {
       String message = "Unknown XML node, expected \"" + expectedName + "\" but got \"" + elementName + "\"";
@@ -232,7 +232,7 @@ public class ReportParser {
     }
   }
 
-  private String mandatoryAttribute(SMInputCursor cursor, String attributeName) throws XMLStreamException {
+  private static String mandatoryAttribute(SMInputCursor cursor, String attributeName) throws XMLStreamException {
     String attributeValue = cursor.getAttrValue(attributeName);
     if (attributeValue == null) {
       String message = "Missing attribute \"" + attributeName + "\" in element \"" + cursor.getLocalName() + "\"";
@@ -273,7 +273,7 @@ public class ReportParser {
     return longValue;
   }
 
-  private String expectedMessage(String expected, String attributeName, String stringValue) {
+  private static String expectedMessage(String expected, String attributeName, String stringValue) {
     return "Expected " + expected + " for attribute \"" + attributeName + "\" but got \"" + stringValue + "\"";
   }
 
