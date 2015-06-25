@@ -6,5 +6,5 @@ public class FooBar {
     }
     return 0;
   }
-  
+
 }
