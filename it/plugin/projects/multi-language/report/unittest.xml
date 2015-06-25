@@ -1,0 +1,19 @@
+<unitTest version="1">
+  <file path="src/test/java/FooBarTest.java">
+    <testCase name="test4" duration="150"/>
+    <testCase name="test5" duration="600"/>
+    <testCase name="test6" duration="600">
+      <skipped message="message">message</skipped>
+    </testCase>
+  </file>
+  <file path="src/test/js/test_foo.js">
+    <testCase name="test2" duration="250"/>
+    <testCase name="test3" duration="400">
+      <failure message="short message">long long stacktrace</failure>
+    </testCase>
+    <testCase name="test5" duration="900"/>
+  </file>
+  <file path="xx/yy.zz">
+    <testCase name="test1" duration="150"/>
+  </file>
+</unitTest>

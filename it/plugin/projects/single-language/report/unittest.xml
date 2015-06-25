@@ -1,0 +1,16 @@
+<unitTest version="1">
+  <file path="test/test_foo.js">
+    <testCase name="test2" duration="300" branchesToCover="2" coveredBranches="1"/>
+    <testCase name="test3" duration="900"/>
+    <testCase name="test5" duration="450">
+      <error message="error in ...">long long stacktrace</error>
+    </testCase>
+  </file>
+  <file path="test\test_bar.js"> <!-- Test path with backslash for Windows -->
+    <testCase name="test3" duration="250"/>
+    <testCase name="test4" duration="600"/>
+  </file>
+  <file path="xx/test_yy.zz">
+    <testCase name="test1" duration="100"/>
+  </file>
+</unitTest>

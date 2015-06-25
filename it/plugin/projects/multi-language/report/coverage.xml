@@ -1,0 +1,14 @@
+<coverage version="1">
+  <file path="src/main/java/FooBar.java">
+    <lineToCover lineNumber="4" covered="true" branchesToCover="4" coveredBranches="3"/>
+    <lineToCover lineNumber="5" covered="false"/>
+  </file>
+  <file path="src/main/js/foo.js">
+    <lineToCover lineNumber="2" covered="true" branchesToCover="2" coveredBranches="1"/>
+    <lineToCover lineNumber="3" covered="false"/>
+    <lineToCover lineNumber="5" covered="true"/>
+  </file>
+  <file path="xx/yy.zz">
+    <lineToCover lineNumber="1" covered="true"/>
+  </file>
+</coverage>
