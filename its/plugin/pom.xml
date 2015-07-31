@@ -4,10 +4,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.sonarsource.parent</groupId>
+    <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>28</version>
-    <relativePath/>
+    <version>23</version>
   </parent>
 
   <artifactId>it-generic-coverage</artifactId>
