@@ -10,28 +10,26 @@ function installTravisTools {
 
 case "$TESTS" in
 
-CI)
+ci)
   mvn verify -B -e -V
   ;;
 
-IT-DEV)
+its)
   installTravisTools
 
-  mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
+  mvn package -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
 
-  build_snapshot "SonarSource/sonarqube"
+  if [ "$SQ_VERSION" = "DEV" ] ; then
+    build_snapshot "SonarSource/sonarqube"
+  fi
 
   cd its/plugin
-  mvn -DgenericcoverageVersion="DEV" -DjavascriptVersion="LATEST_RELEASE" -DjavaVersion="LATEST_RELEASE" -Dsonar.runtimeVersion="DEV" -Dmaven.test.redirectTestOutputToFile=false install
+  mvn -DjavascriptVersion="LATEST_RELEASE" -DjavaVersion="LATEST_RELEASE" -Dsonar.runtimeVersion="$SQ_VERSION" -Dmaven.test.redirectTestOutputToFile=false install
   ;;
 
-IT-LTS_OR_OLDEST_COMPATIBLE)
-  installTravisTools
-
-  mvn install -Dsource.skip=true -Denforcer.skip=true -Danimal.sniffer.skip=true -Dmaven.test.skip=true
-
-  cd its/plugin
-  mvn -DgenericcoverageVersion="DEV" -DjavascriptVersion="LATEST_RELEASE" -DjavaVersion="LATEST_RELEASE" -Dsonar.runtimeVersion="LTS_OR_OLDEST_COMPATIBLE" -Dmaven.test.redirectTestOutputToFile=false install
+*)
+  echo "Unexpected TESTS mode (ci, its expected): $TESTS"
+  exit 1
   ;;
 
 esac

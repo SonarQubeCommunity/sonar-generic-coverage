@@ -21,6 +21,7 @@ package com.sonar.coverage.generic;
 
 import com.sonar.orchestrator.Orchestrator;
 import com.sonar.orchestrator.build.SonarRunner;
+import com.sonar.orchestrator.locator.FileLocation;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -41,8 +42,7 @@ public class Tests {
 
   @ClassRule
   public static final Orchestrator ORCHESTRATOR = Orchestrator.builderEnv()
-    .setMainPluginKey(PLUGIN_KEY)
-    .addPlugin(PLUGIN_KEY)
+    .addPlugin(FileLocation.of("../../target/sonar-generic-coverage-plugin.jar"))
     .addPlugin("java")
     .addPlugin("javascript")
     .build();
