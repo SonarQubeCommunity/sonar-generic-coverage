@@ -22,16 +22,15 @@ package org.sonar.plugins.coverage.generic;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.SortedMap;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.measures.Metric;
 import org.sonar.api.measures.PersistenceMode;
 import org.sonar.api.utils.KeyValueFormat;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.SortedMap;
 
 public final class CustomCoverageMeasuresBuilder {
 
@@ -56,6 +55,15 @@ public final class CustomCoverageMeasuresBuilder {
     .put(METRIC.UNCOVERED_CONDITIONS, CoreMetrics.IT_UNCOVERED_CONDITIONS)
     .put(METRIC.COVERED_CONDITIONS_BY_LINE, CoreMetrics.IT_COVERED_CONDITIONS_BY_LINE)
     .put(METRIC.CONDITIONS_BY_LINE, CoreMetrics.IT_CONDITIONS_BY_LINE).build();
+
+  private static final Map<METRIC, Metric> OVERALL_KEYS = ImmutableMap.<METRIC, Metric>builder()
+    .put(METRIC.LINES_TO_COVER, CoreMetrics.OVERALL_LINES_TO_COVER)
+    .put(METRIC.UNCOVERED_LINES, CoreMetrics.OVERALL_UNCOVERED_LINES)
+    .put(METRIC.COVERAGE_LINE_HITS_DATA, CoreMetrics.OVERALL_COVERAGE_LINE_HITS_DATA)
+    .put(METRIC.CONDITIONS_TO_COVER, CoreMetrics.OVERALL_CONDITIONS_TO_COVER)
+    .put(METRIC.UNCOVERED_CONDITIONS, CoreMetrics.OVERALL_UNCOVERED_CONDITIONS)
+    .put(METRIC.COVERED_CONDITIONS_BY_LINE, CoreMetrics.OVERALL_COVERED_CONDITIONS_BY_LINE)
+    .put(METRIC.CONDITIONS_BY_LINE, CoreMetrics.OVERALL_CONDITIONS_BY_LINE).build();
 
   private int totalCoveredLines = 0, totalConditions = 0, totalCoveredConditions = 0;
   private final SortedMap<Integer, Integer> hitsByLine = Maps.newTreeMap();
@@ -105,7 +113,6 @@ public final class CustomCoverageMeasuresBuilder {
     }
     return this;
   }
-
 
   public int getCoveredConditions() {
     return totalCoveredConditions;
@@ -163,6 +170,11 @@ public final class CustomCoverageMeasuresBuilder {
 
   public CustomCoverageMeasuresBuilder enableITMode() {
     metrics = IT_KEYS;
+    return this;
+  }
+
+  public CustomCoverageMeasuresBuilder enableOverallMode() {
+    metrics = OVERALL_KEYS;
     return this;
   }
 

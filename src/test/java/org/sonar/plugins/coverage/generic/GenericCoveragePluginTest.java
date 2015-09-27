@@ -27,7 +27,7 @@ public class GenericCoveragePluginTest {
 
   @Test
   public void extensions() throws Exception {
-    assertThat(new GenericCoveragePlugin().getExtensions()).hasSize(5);
+    assertThat(new GenericCoveragePlugin().getExtensions()).hasSize(6);
   }
 
 }
