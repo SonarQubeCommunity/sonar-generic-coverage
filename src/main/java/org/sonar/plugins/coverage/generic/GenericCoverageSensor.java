@@ -53,15 +53,16 @@ public class GenericCoverageSensor implements Sensor {
 
   @Override
   public boolean shouldExecuteOnProject(Project project) {
-    return StringUtils.isNotEmpty(reportPath(null)) || StringUtils.isNotEmpty(itReportPath()) || StringUtils.isNotEmpty(unitTestReportPath());
+    return StringUtils.isNotEmpty(coverageReportPath(null)) || StringUtils.isNotEmpty(itReportPath()) ||
+      StringUtils.isNotEmpty(overallReportPath()) || StringUtils.isNotEmpty(unitTestReportPath());
   }
 
-  private String reportPath(Logger logger) {
+  private String coverageReportPath(Logger logger) {
     String result = settings.getString(GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
     if (Strings.isNullOrEmpty(result)) {
-      result = settings.getString(GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY);
+      result = settings.getString(GenericCoveragePlugin.COVERAGE_REPORT_PATHS_PROPERTY_KEY);
     } else if (logger != null) {
-      logDeprecatedPropertyUsage(logger, GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY, GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
+      logDeprecatedPropertyUsage(logger, GenericCoveragePlugin.COVERAGE_REPORT_PATHS_PROPERTY_KEY, GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
     }
     return result;
   }
@@ -71,7 +72,11 @@ public class GenericCoverageSensor implements Sensor {
   }
 
   private String itReportPath() {
-    return settings.getString(GenericCoveragePlugin.IT_REPORT_PATHS_PROPERTY_KEY);
+    return settings.getString(GenericCoveragePlugin.IT_COVERAGE_REPORT_PATHS_PROPERTY_KEY);
+  }
+
+  private String overallReportPath() {
+    return settings.getString(GenericCoveragePlugin.OVERALL_COVERAGE_REPORT_PATHS_PROPERTY_KEY);
   }
 
   private String unitTestReportPath() {
@@ -88,9 +93,12 @@ public class GenericCoverageSensor implements Sensor {
   }
 
   public void analyseWithLogger(SensorContext context, Logger logger) {
-    boolean ok = loadReport(context, logger, ReportParser.Mode.COVERAGE, reportPath(logger));
+    boolean ok = loadReport(context, logger, ReportParser.Mode.COVERAGE, coverageReportPath(logger));
     if (ok) {
       ok = loadReport(context, logger, ReportParser.Mode.IT_COVERAGE, itReportPath());
+    }
+    if (ok) {
+      ok = loadReport(context, logger, ReportParser.Mode.OVERALL_COVERAGE, overallReportPath());
     }
     if (ok) {
       loadReport(context, logger, ReportParser.Mode.UNITTEST, unitTestReportPath());
@@ -139,6 +147,8 @@ public class GenericCoverageSensor implements Sensor {
       return "coverage";
     } else if (ReportParser.Mode.IT_COVERAGE == mode) {
       return "IT coverage";
+    } else if (ReportParser.Mode.OVERALL_COVERAGE == mode) {
+      return "Overall coverage";
     } else {
       return "unit test";
     }

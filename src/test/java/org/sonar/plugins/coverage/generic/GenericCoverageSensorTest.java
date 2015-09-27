@@ -84,6 +84,11 @@ public class GenericCoverageSensorTest {
     assertThat(sensor.shouldExecuteOnProject(project)).isTrue();
     configureReportPaths("");
     configureITReportPaths("");
+    configureOverallReportPaths("my-report");
+    assertThat(sensor.shouldExecuteOnProject(project)).isTrue();
+    configureReportPaths("");
+    configureITReportPaths("");
+    configureOverallReportPaths("");
     configureUTReportPaths("my-report");
     assertThat(sensor.shouldExecuteOnProject(project)).isTrue();
   }
@@ -93,6 +98,7 @@ public class GenericCoverageSensorTest {
     configureReportPaths("");
     configureITReportPaths("");
     configureUTReportPaths("");
+    configureOverallReportPaths("");
     assertThat(sensor.shouldExecuteOnProject(project)).isFalse();
   }
 
@@ -114,32 +120,37 @@ public class GenericCoverageSensorTest {
     assertThat(getLoggingEvents().get(1).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(getLoggingEvents().get(2).getMessage()).contains("Imported coverage data for 1 file");
     assertThat(getLoggingEvents().get(4).getMessage()).contains("Imported IT coverage data for 0 files");
-    assertThat(getLoggingEvents().get(5).getMessage()).contains("Imported unit test data for 0 files");
+    assertThat(getLoggingEvents().get(5).getMessage()).contains("Imported Overall coverage data for 0 files");
+    assertThat(getLoggingEvents().get(6).getMessage()).contains("Imported unit test data for 0 files");
   }
 
   @Test
   public void analyse_report_with_relative_path() throws Exception {
     configureReportPaths("coverage.xml");
     configureITReportPaths("coverage.xml");
+    configureOverallReportPaths("coverage.xml");
     configureUTReportPaths("unittest.xml");
     InputFile resource = addFileToContext("src/foobar.js");
     InputFile testResource = addFileToContext("test/foobar_test.js");
     sensor.analyseWithLogger(context, logger);
-    verify(context, times(6)).saveMeasure(eq(resource), any(Measure.class));
+    verify(context, times(9)).saveMeasure(eq(resource), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(testResource), any(Measure.class));
 
     assertThat(getLoggingEvents().get(0).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(getLoggingEvents().get(1).getMessage()).contains("Imported coverage data for 1 file");
     assertThat(getLoggingEvents().get(3).getMessage()).contains("Parsing ").contains("coverage.xml");
     assertThat(getLoggingEvents().get(4).getMessage()).contains("Imported IT coverage data for 1 file");
-    assertThat(getLoggingEvents().get(6).getMessage()).contains("Parsing ").contains("unittest.xml");
-    assertThat(getLoggingEvents().get(7).getMessage()).contains("Imported unit test data for 1 file");
+    assertThat(getLoggingEvents().get(6).getMessage()).contains("Parsing ").contains("coverage.xml");
+    assertThat(getLoggingEvents().get(7).getMessage()).contains("Imported Overall coverage data for 1 file");
+    assertThat(getLoggingEvents().get(9).getMessage()).contains("Parsing ").contains("unittest.xml");
+    assertThat(getLoggingEvents().get(10).getMessage()).contains("Imported unit test data for 1 file");
   }
 
   @Test
   public void analyse_report_with_multiple_relative_path() throws Exception {
     configureReportPaths("coverage.xml,coverage2.xml");
     configureITReportPaths("coverage.xml,coverage2.xml");
+    configureOverallReportPaths("coverage.xml,coverage2.xml");
     configureUTReportPaths("unittest.xml,unittest2.xml");
     InputFile resource1 = addFileToContext("src/foobar.js");
     InputFile resource2 = addFileToContext("src/helloworld.js");
@@ -147,9 +158,9 @@ public class GenericCoverageSensorTest {
     InputFile testResource1 = addFileToContext("test/foobar_test.js");
     InputFile testResource2 = addFileToContext("test/helloworld_test.js");
     sensor.analyseWithLogger(context, logger);
-    verify(context, times(6)).saveMeasure(eq(resource1), any(Measure.class));
-    verify(context, times(6)).saveMeasure(eq(resource2), any(Measure.class));
-    verify(context, times(6)).saveMeasure(eq(resource3), any(Measure.class));
+    verify(context, times(9)).saveMeasure(eq(resource1), any(Measure.class));
+    verify(context, times(9)).saveMeasure(eq(resource2), any(Measure.class));
+    verify(context, times(9)).saveMeasure(eq(resource3), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(testResource1), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(testResource2), any(Measure.class));
 
@@ -159,9 +170,12 @@ public class GenericCoverageSensorTest {
     assertThat(getLoggingEvents().get(3).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(getLoggingEvents().get(4).getMessage()).contains("Parsing").contains("coverage2.xml");
     assertThat(getLoggingEvents().get(5).getMessage()).isEqualTo("Imported IT coverage data for 3 files");
-    assertThat(getLoggingEvents().get(6).getMessage()).contains("Parsing").contains("unittest.xml");
-    assertThat(getLoggingEvents().get(7).getMessage()).contains("Parsing").contains("unittest2.xml");
-    assertThat(getLoggingEvents().get(8).getMessage()).isEqualTo("Imported unit test data for 2 files");
+    assertThat(getLoggingEvents().get(6).getMessage()).contains("Parsing").contains("coverage.xml");
+    assertThat(getLoggingEvents().get(7).getMessage()).contains("Parsing").contains("coverage2.xml");
+    assertThat(getLoggingEvents().get(8).getMessage()).isEqualTo("Imported Overall coverage data for 3 files");
+    assertThat(getLoggingEvents().get(9).getMessage()).contains("Parsing").contains("unittest.xml");
+    assertThat(getLoggingEvents().get(10).getMessage()).contains("Parsing").contains("unittest2.xml");
+    assertThat(getLoggingEvents().get(11).getMessage()).isEqualTo("Imported unit test data for 2 files");
   }
 
   @Test
@@ -177,14 +191,15 @@ public class GenericCoverageSensorTest {
   public void analyse_report_with_multiple_absolute_path() throws Exception {
     configureReportPaths(new File(baseDir, "coverage.xml").getAbsolutePath() + "," + new File(baseDir, "coverage2.xml").getAbsolutePath());
     configureITReportPaths(new File(baseDir, "coverage.xml").getAbsolutePath() + "," + new File(baseDir, "coverage2.xml").getAbsolutePath());
+    configureOverallReportPaths(new File(baseDir, "coverage.xml").getAbsolutePath() + "," + new File(baseDir, "coverage2.xml").getAbsolutePath());
     configureUTReportPaths(new File(baseDir, "unittest.xml").getAbsolutePath() + "," + new File(baseDir, "unittest2.xml").getAbsolutePath());
     InputFile resource = addFileToContext("src/foobar.js");
     InputFile resource2 = addFileToContext("src/helloworld.js");
     InputFile testResource = addFileToContext("test/foobar_test.js");
     InputFile testResource2 = addFileToContext("test/helloworld_test.js");
     sensor.analyseWithLogger(context, logger);
-    verify(context, times(6)).saveMeasure(eq(resource), any(Measure.class));
-    verify(context, times(6)).saveMeasure(eq(resource2), any(Measure.class));
+    verify(context, times(9)).saveMeasure(eq(resource), any(Measure.class));
+    verify(context, times(9)).saveMeasure(eq(resource2), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(testResource), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(testResource2), any(Measure.class));
 
@@ -194,26 +209,32 @@ public class GenericCoverageSensorTest {
     assertThat(getLoggingEvents().get(4).getMessage()).contains("Parsing").contains("coverage.xml");
     assertThat(getLoggingEvents().get(5).getMessage()).contains("Parsing").contains("coverage2.xml");
     assertThat(getLoggingEvents().get(6).getMessage()).contains("Imported IT coverage data for 2 file");
-    assertThat(getLoggingEvents().get(8).getMessage()).contains("Parsing").contains("unittest.xml");
-    assertThat(getLoggingEvents().get(9).getMessage()).contains("Parsing").contains("unittest2.xml");
-    assertThat(getLoggingEvents().get(10).getMessage()).contains("Imported unit test data for 2 file");
+    assertThat(getLoggingEvents().get(8).getMessage()).contains("Parsing").contains("coverage.xml");
+    assertThat(getLoggingEvents().get(9).getMessage()).contains("Parsing").contains("coverage2.xml");
+    assertThat(getLoggingEvents().get(10).getMessage()).contains("Imported Overall coverage data for 2 file");
+    assertThat(getLoggingEvents().get(12).getMessage()).contains("Parsing").contains("unittest.xml");
+    assertThat(getLoggingEvents().get(13).getMessage()).contains("Parsing").contains("unittest2.xml");
+    assertThat(getLoggingEvents().get(14).getMessage()).contains("Imported unit test data for 2 file");
   }
 
   @Test
   public void analyse_report_with_unknown_files() throws Exception {
     configureReportPaths("coverage_with_2_unknown_files.xml");
     configureITReportPaths("coverage_with_2_unknown_files.xml");
+    configureOverallReportPaths("coverage_with_2_unknown_files.xml");
     configureUTReportPaths("unittest_with_2_unknown_files.xml");
     sensor.analyseWithLogger(context, logger);
     assertThat(getLoggingEvents().get(2).getMessage()).contains("coverage data ignored for 2 unknown files");
     assertThat(getLoggingEvents().get(5).getMessage()).contains("IT coverage data ignored for 2 unknown files");
-    assertThat(getLoggingEvents().get(8).getMessage()).contains("unit test data ignored for 2 unknown files");
+    assertThat(getLoggingEvents().get(8).getMessage()).contains("Overall coverage data ignored for 2 unknown files");
+    assertThat(getLoggingEvents().get(11).getMessage()).contains("unit test data ignored for 2 unknown files");
   }
 
   @Test
   public void analyse_report_with_7_unknown_files() throws Exception {
     configureReportPaths("coverage_with_7_unknown_files.xml");
     configureITReportPaths("coverage_with_7_unknown_files.xml");
+    configureOverallReportPaths("coverage_with_7_unknown_files.xml");
     configureUTReportPaths("unittest_with_7_unknown_files.xml");
     sensor.analyseWithLogger(context, logger);
     String message = getLoggingEvents().get(2).getMessage();
@@ -225,6 +246,10 @@ public class GenericCoverageSensorTest {
     assertThat(message).contains("unknown1.js");
     assertThat(Splitter.on("\n").split(message)).hasSize(6);
     message = getLoggingEvents().get(8).getMessage();
+    assertThat(message).contains("Overall coverage data ignored for 7 unknown files");
+    assertThat(message).contains("unknown1.js");
+    assertThat(Splitter.on("\n").split(message)).hasSize(6);
+    message = getLoggingEvents().get(11).getMessage();
     assertThat(message).contains("unit test data ignored for 7 unknown files");
     assertThat(message).contains("unknown1.js");
     assertThat(Splitter.on("\n").split(message)).hasSize(6);
@@ -233,12 +258,15 @@ public class GenericCoverageSensorTest {
   @Test
   public void analyse_report_not_found() throws Exception {
     configureReportPaths("xxx");
+    configureITReportPaths("");
+    configureOverallReportPaths("");
     sensor.analyseWithLogger(context, logger);
     verifyZeroInteractions(context);
     assertThat(getLoggingEvents().get(1).getLevel()).isEqualTo("warn");
     assertThat(getLoggingEvents().get(1).getMessage()).contains("Cannot find coverage");
     configureReportPaths("");
     configureITReportPaths("xxx");
+    configureOverallReportPaths("");
     sensor.analyseWithLogger(context, logger);
     verifyZeroInteractions(context);
     assertThat(getLoggingEvents().get(4).getLevel()).isEqualTo("warn");
@@ -246,10 +274,18 @@ public class GenericCoverageSensorTest {
     configureReportPaths("");
     configureITReportPaths("");
     configureUTReportPaths("xxx");
+    configureOverallReportPaths("xxx");
     sensor.analyseWithLogger(context, logger);
     verifyZeroInteractions(context);
     assertThat(getLoggingEvents().get(8).getLevel()).isEqualTo("warn");
-    assertThat(getLoggingEvents().get(8).getMessage()).contains("Cannot find unit test");
+    assertThat(getLoggingEvents().get(8).getMessage()).contains("Cannot find Overall coverage");
+    configureReportPaths("");
+    configureOverallReportPaths("");
+    configureUTReportPaths("xxx");
+    sensor.analyseWithLogger(context, logger);
+    verifyZeroInteractions(context);
+    assertThat(getLoggingEvents().get(13).getMessage()).contains("Cannot find unit test");
+    assertThat(getLoggingEvents().get(13).getLevel()).isEqualTo("warn");
   }
 
   @Test(expected = SonarException.class)
@@ -261,6 +297,12 @@ public class GenericCoverageSensorTest {
   @Test(expected = SonarException.class)
   public void it_analyse_txt_report() throws Exception {
     configureITReportPaths("not-xml.txt");
+    sensor.analyse(project, context);
+  }
+
+  @Test(expected = SonarException.class)
+  public void overall_analyse_txt_report() throws Exception {
+    configureOverallReportPaths("not-xml.txt");
     sensor.analyse(project, context);
   }
 
@@ -283,6 +325,12 @@ public class GenericCoverageSensorTest {
   }
 
   @Test(expected = SonarException.class)
+  public void overall_analyse_invalid_report() throws Exception {
+    configureOverallReportPaths("invalid-coverage.xml");
+    sensor.analyse(project, context);
+  }
+
+  @Test(expected = SonarException.class)
   public void ut_analyse_invalid_report() throws Exception {
     configureUTReportPaths("invalid-unittest.xml");
     sensor.analyse(project, context);
@@ -298,11 +346,15 @@ public class GenericCoverageSensorTest {
   }
 
   private void configureReportPaths(String reportPaths) {
-    settings.setProperty(GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY, reportPaths);
+    settings.setProperty(GenericCoveragePlugin.COVERAGE_REPORT_PATHS_PROPERTY_KEY, reportPaths);
   }
 
   private void configureITReportPaths(String itReportPaths) {
-    settings.setProperty(GenericCoveragePlugin.IT_REPORT_PATHS_PROPERTY_KEY, itReportPaths);
+    settings.setProperty(GenericCoveragePlugin.IT_COVERAGE_REPORT_PATHS_PROPERTY_KEY, itReportPaths);
+  }
+
+  private void configureOverallReportPaths(String overallReportPaths) {
+    settings.setProperty(GenericCoveragePlugin.OVERALL_COVERAGE_REPORT_PATHS_PROPERTY_KEY, overallReportPaths);
   }
 
   private void configureUTReportPaths(String utReportPaths) {

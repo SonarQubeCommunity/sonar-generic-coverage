@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.coverage.generic;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
@@ -45,13 +44,8 @@ import java.util.Set;
 public class ReportParser {
 
   public enum Mode {
-    COVERAGE, IT_COVERAGE, UNITTEST
+    COVERAGE, IT_COVERAGE, OVERALL_COVERAGE, UNITTEST
   }
-
-  private static final Map<Mode, String> ROOT_NODE = ImmutableMap.<Mode, String>builder()
-    .put(Mode.COVERAGE, "coverage")
-    .put(Mode.IT_COVERAGE, "coverage")
-    .put(Mode.UNITTEST, "unitTest").build();
 
   private static final String LINE_NUMBER_ATTR = "lineNumber";
   private static final String COVERED_ATTR = "covered";
@@ -104,7 +98,7 @@ public class ReportParser {
   }
 
   private void parseRootNode(SMHierarchicCursor rootCursor) throws XMLStreamException {
-    checkElementName(rootCursor, ROOT_NODE.get(mode));
+    checkElementName(rootCursor, mode == Mode.UNITTEST ? "unitTest" : "coverage");
     String version = rootCursor.getAttrValue("version");
     if (!"1".equals(version)) {
       String message = "Unknown coverage version: " + version + ". This parser only handles version 1.";
@@ -151,8 +145,15 @@ public class ReportParser {
     CustomCoverageMeasuresBuilder measuresBuilder = coverageMeasures.get(resource);
     if (measuresBuilder == null) {
       measuresBuilder = CustomCoverageMeasuresBuilder.create();
-      if (Mode.IT_COVERAGE == mode) {
-        measuresBuilder.enableITMode();
+      switch (mode) {
+        case IT_COVERAGE:
+          measuresBuilder.enableITMode();
+          break;
+        case OVERALL_COVERAGE:
+          measuresBuilder.enableOverallMode();
+          break;
+        default:
+          break;
       }
       coverageMeasures.put(resource, measuresBuilder);
     }

@@ -45,6 +45,7 @@ public class SingleLanguageTest {
       .setProjectVersion("1.0-SNAPSHOT")
       .setProperty("sonar.genericcoverage.reportPaths", "report/coverage.xml")
       .setProperty("sonar.genericcoverage.itReportPaths", "report/itcoverage.xml")
+      .setProperty("sonar.genericcoverage.overallReportPaths", "report/overallcoverage.xml")
       .setProperty("sonar.genericcoverage.unitTestReportPaths", "report/unittest.xml")
       .setSourceDirs("src")
       .setTestDirs("test")
@@ -71,6 +72,15 @@ public class SingleLanguageTest {
   }
 
   @Test
+  public void file_overall_coverage_measures() throws Exception {
+    String fileKey = PROJECT + ":src/foo.js";
+    assertThat(Tests.getMeasure(fileKey, "overall_lines_to_cover").getIntValue()).isEqualTo(3);
+    assertThat(Tests.getMeasure(fileKey, "overall_uncovered_lines").getIntValue()).isEqualTo(1);
+    assertThat(Tests.getMeasure(fileKey, "overall_conditions_to_cover").getIntValue()).isEqualTo(2);
+    assertThat(Tests.getMeasure(fileKey, "overall_uncovered_conditions").getIntValue()).isEqualTo(1);
+  }
+
+  @Test
   public void file_unittest_measures() throws Exception {
     String fileKey = PROJECT + ":test/test_foo.js";
     assertThat(Tests.getMeasure(fileKey, "tests").getIntValue()).isEqualTo(3);
@@ -93,6 +103,14 @@ public class SingleLanguageTest {
     assertThat(Tests.getMeasure(PROJECT, "it_uncovered_lines").getIntValue()).isEqualTo(2);
     assertThat(Tests.getMeasure(PROJECT, "it_conditions_to_cover").getIntValue()).isEqualTo(6);
     assertThat(Tests.getMeasure(PROJECT, "it_uncovered_conditions").getIntValue()).isEqualTo(2);
+  }
+
+  @Test
+  public void project_overall_coverage_measures() throws Exception {
+    assertThat(Tests.getMeasure(PROJECT, "overall_lines_to_cover").getIntValue()).isEqualTo(5);
+    assertThat(Tests.getMeasure(PROJECT, "overall_uncovered_lines").getIntValue()).isEqualTo(2);
+    assertThat(Tests.getMeasure(PROJECT, "overall_conditions_to_cover").getIntValue()).isEqualTo(6);
+    assertThat(Tests.getMeasure(PROJECT, "overall_uncovered_conditions").getIntValue()).isEqualTo(2);
   }
 
   @Test

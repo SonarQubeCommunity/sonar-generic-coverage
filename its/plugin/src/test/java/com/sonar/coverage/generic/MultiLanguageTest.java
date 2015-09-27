@@ -45,6 +45,7 @@ public class MultiLanguageTest {
       .setProjectVersion("1.0-SNAPSHOT")
       .setProperty("sonar.genericcoverage.reportPaths", "report/coverage.xml")
       .setProperty("sonar.genericcoverage.itReportPaths", "report/itcoverage.xml")
+      .setProperty("sonar.genericcoverage.overallReportPaths", "report/overallcoverage.xml")
       .setProperty("sonar.genericcoverage.unitTestReportPaths", "report/unittest.xml")
       .setSourceDirs("src/main/java,src/main/js")
       .setTestDirs("src/test/java,src/test/js");
@@ -68,15 +69,29 @@ public class MultiLanguageTest {
   @Test
   public void file_it_coverage_measures() throws Exception {
     String javaFileKey = PROJECT + ":src/main/java/FooBar.java";
-    assertThat(Tests.getMeasure(javaFileKey, "lines_to_cover").getIntValue()).isEqualTo(2);
-    assertThat(Tests.getMeasure(javaFileKey, "uncovered_lines").getIntValue()).isEqualTo(1);
-    assertThat(Tests.getMeasure(javaFileKey, "conditions_to_cover").getIntValue()).isEqualTo(4);
-    assertThat(Tests.getMeasure(javaFileKey, "uncovered_conditions").getIntValue()).isEqualTo(1);
+    assertThat(Tests.getMeasure(javaFileKey, "it_lines_to_cover").getIntValue()).isEqualTo(2);
+    assertThat(Tests.getMeasure(javaFileKey, "it_uncovered_lines").getIntValue()).isEqualTo(1);
+    assertThat(Tests.getMeasure(javaFileKey, "it_conditions_to_cover").getIntValue()).isEqualTo(4);
+    assertThat(Tests.getMeasure(javaFileKey, "it_uncovered_conditions").getIntValue()).isEqualTo(1);
     String jsFileKey = PROJECT + ":src/main/js/foo.js";
-    assertThat(Tests.getMeasure(jsFileKey, "lines_to_cover").getIntValue()).isEqualTo(3);
-    assertThat(Tests.getMeasure(jsFileKey, "uncovered_lines").getIntValue()).isEqualTo(1);
-    assertThat(Tests.getMeasure(jsFileKey, "conditions_to_cover").getIntValue()).isEqualTo(2);
-    assertThat(Tests.getMeasure(jsFileKey, "uncovered_conditions").getIntValue()).isEqualTo(1);
+    assertThat(Tests.getMeasure(jsFileKey, "it_lines_to_cover").getIntValue()).isEqualTo(3);
+    assertThat(Tests.getMeasure(jsFileKey, "it_uncovered_lines").getIntValue()).isEqualTo(1);
+    assertThat(Tests.getMeasure(jsFileKey, "it_conditions_to_cover").getIntValue()).isEqualTo(2);
+    assertThat(Tests.getMeasure(jsFileKey, "it_uncovered_conditions").getIntValue()).isEqualTo(1);
+  }
+
+  @Test
+  public void file_overall_coverage_measures() throws Exception {
+    String javaFileKey = PROJECT + ":src/main/java/FooBar.java";
+    assertThat(Tests.getMeasure(javaFileKey, "overall_lines_to_cover").getIntValue()).isEqualTo(2);
+    assertThat(Tests.getMeasure(javaFileKey, "overall_uncovered_lines").getIntValue()).isEqualTo(1);
+    assertThat(Tests.getMeasure(javaFileKey, "overall_conditions_to_cover").getIntValue()).isEqualTo(4);
+    assertThat(Tests.getMeasure(javaFileKey, "overall_uncovered_conditions").getIntValue()).isEqualTo(1);
+    String jsFileKey = PROJECT + ":src/main/js/foo.js";
+    assertThat(Tests.getMeasure(jsFileKey, "overall_lines_to_cover").getIntValue()).isEqualTo(3);
+    assertThat(Tests.getMeasure(jsFileKey, "overall_uncovered_lines").getIntValue()).isEqualTo(1);
+    assertThat(Tests.getMeasure(jsFileKey, "overall_conditions_to_cover").getIntValue()).isEqualTo(2);
+    assertThat(Tests.getMeasure(jsFileKey, "overall_uncovered_conditions").getIntValue()).isEqualTo(1);
   }
 
   @Test
@@ -106,6 +121,14 @@ public class MultiLanguageTest {
     assertThat(Tests.getMeasure(PROJECT, "it_uncovered_lines").getIntValue()).isEqualTo(2);
     assertThat(Tests.getMeasure(PROJECT, "it_conditions_to_cover").getIntValue()).isEqualTo(6);
     assertThat(Tests.getMeasure(PROJECT, "it_uncovered_conditions").getIntValue()).isEqualTo(2);
+  }
+
+  @Test
+  public void project_overall_coverage_measures() throws Exception {
+    assertThat(Tests.getMeasure(PROJECT, "overall_lines_to_cover").getIntValue()).isEqualTo(5);
+    assertThat(Tests.getMeasure(PROJECT, "overall_uncovered_lines").getIntValue()).isEqualTo(2);
+    assertThat(Tests.getMeasure(PROJECT, "overall_conditions_to_cover").getIntValue()).isEqualTo(6);
+    assertThat(Tests.getMeasure(PROJECT, "overall_uncovered_conditions").getIntValue()).isEqualTo(2);
   }
 
   @Test
