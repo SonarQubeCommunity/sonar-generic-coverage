@@ -7,20 +7,19 @@ jdk:
 install: true
 script: ./travis.sh
 env:
-  - TESTS=ci
-  - TESTS=its
-    SQ_VERSION=DEV
-  - TESTS=its
-    SQ_VERSION=LATEST_RELEASE
-  - TESTS=its
-    SQ_VERSION=LTS
+  - TARGET=CI
+  - TARGET=IT SQ_VERSION=DEV
+  - TARGET=IT SQ_VERSION=LATEST_RELEASE
+  - TARGET=IT SQ_VERSION=LTS
 
 matrix:
   fast_finish: true
 
 cache:
   directories:
-    - '$HOME/.m2/repository'
+    - $HOME/.m2/repository
+    # for analysis and integration tests
+    - $HOME/.sonar
 
 notifications:
   email: false
