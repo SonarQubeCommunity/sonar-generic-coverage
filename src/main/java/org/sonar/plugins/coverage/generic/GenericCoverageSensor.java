@@ -84,22 +84,22 @@ public class GenericCoverageSensor implements Sensor {
 
   @Override
   public void analyse(Project project, SensorContext context) {
-    analyseWithLogger(project, context, LoggerFactory.getLogger(GenericCoverageSensor.class));
+    analyseWithLogger(context, LoggerFactory.getLogger(GenericCoverageSensor.class));
   }
 
-  public void analyseWithLogger(Project project, SensorContext context, Logger logger) {
-    boolean ok = loadReport(project, context, logger, ReportParser.Mode.COVERAGE, reportPath(logger));
+  public void analyseWithLogger(SensorContext context, Logger logger) {
+    boolean ok = loadReport(context, logger, ReportParser.Mode.COVERAGE, reportPath(logger));
     if (ok) {
-      ok = loadReport(project, context, logger, ReportParser.Mode.IT_COVERAGE, itReportPath());
+      ok = loadReport(context, logger, ReportParser.Mode.IT_COVERAGE, itReportPath());
     }
     if (ok) {
-      loadReport(project, context, logger, ReportParser.Mode.UNITTEST, unitTestReportPath());
+      loadReport(context, logger, ReportParser.Mode.UNITTEST, unitTestReportPath());
     }
   }
 
-  private boolean loadReport(Project project, SensorContext context, Logger logger, ReportParser.Mode mode, String reportPath) {
+  private boolean loadReport(SensorContext context, Logger logger, ReportParser.Mode mode, String reportPath) {
     String modeString = getModeString(mode);
-    ReportParser parser = new ReportParser(new ResourceLocator(project, fs), context, perspectives, mode);
+    ReportParser parser = new ReportParser(fs, context, perspectives, mode);
     List<String> strings = getList(reportPath);
     while (!strings.isEmpty()) {
       String path = strings.remove(0);

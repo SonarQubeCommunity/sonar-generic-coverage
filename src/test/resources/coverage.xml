@@ -1,4 +1,5 @@
 <coverage version="1">
+  <file path="src/main/java/com/example/NonExisting.java"/>
   <file path="src/main/java/com/example/EmptyClass.java"/>
   <file path="src/main/java/com/example/ClassWithoutBranch.java">
     <lineToCover lineNumber="2" covered="false"/>

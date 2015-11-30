@@ -25,10 +25,10 @@ import com.google.common.collect.Sets;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.sonar.api.batch.SensorContext;
+import org.sonar.api.batch.fs.FileSystem;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.measures.Measure;
-import org.sonar.api.resources.File;
-import org.sonar.api.resources.Resource;
 import org.sonar.api.test.MutableTestPlan;
 import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.StaxParser;
@@ -63,7 +63,7 @@ public class ReportParser {
 
   private static final int MAX_STORED_UNKNOWN_FILE_PATHS = 5;
 
-  private final ResourceLocator resourceLocator;
+  private final FileSystem fileSystem;
   private final SensorContext context;
   private final ResourcePerspectives perspectives;
   private final Mode mode;
@@ -71,11 +71,11 @@ public class ReportParser {
   private int numberOfUnknownFiles;
   private final List<String> firstUnknownFiles = Lists.newArrayList();
   private final Set<String> matchedFileKeys = Sets.newHashSet();
-  private final Map<File, CustomCoverageMeasuresBuilder> coverageMeasures = new HashMap<>();
-  private final Map<File, UnitTestMeasuresBuilder> unitTestMeasures = new HashMap<>();
+  private final Map<InputFile, CustomCoverageMeasuresBuilder> coverageMeasures = new HashMap<>();
+  private final Map<InputFile, UnitTestMeasuresBuilder> unitTestMeasures = new HashMap<>();
 
-  public ReportParser(ResourceLocator resourceLocator, SensorContext context, ResourcePerspectives perspectives, Mode mode) {
-    this.resourceLocator = resourceLocator;
+  public ReportParser(FileSystem fileSystem, SensorContext context, ResourcePerspectives perspectives, Mode mode) {
+    this.fileSystem = fileSystem;
     this.context = context;
     this.perspectives = perspectives;
     this.mode = mode;
@@ -117,15 +117,15 @@ public class ReportParser {
     while (fileCursor.getNext() != null) {
       checkElementName(fileCursor, "file");
       String filePath = mandatoryAttribute(fileCursor, "path");
-      File resource = resourceLocator.getResource(filePath);
-      if (context.getResource(resource) == null) {
+      InputFile resource = fileSystem.inputFile(fileSystem.predicates().hasPath(filePath));
+      if (resource == null || context.getResource(resource) == null) {
         numberOfUnknownFiles++;
         if (numberOfUnknownFiles <= MAX_STORED_UNKNOWN_FILE_PATHS) {
           firstUnknownFiles.add(filePath);
         }
         continue;
       }
-      matchedFileKeys.add(resource.getKey());
+      matchedFileKeys.add(resource.absolutePath());
 
       SMInputCursor testCaseCursor = fileCursor.childElementCursor();
       while (testCaseCursor.getNext() != null) {
@@ -138,7 +138,7 @@ public class ReportParser {
     }
   }
 
-  private UnitTestMeasuresBuilder getUnitTestMeasuresBuilder(File resource) {
+  private UnitTestMeasuresBuilder getUnitTestMeasuresBuilder(InputFile resource) {
     UnitTestMeasuresBuilder measuresBuilder = unitTestMeasures.get(resource);
     if (measuresBuilder == null) {
       measuresBuilder = UnitTestMeasuresBuilder.create();
@@ -147,7 +147,7 @@ public class ReportParser {
     return measuresBuilder;
   }
 
-  private CustomCoverageMeasuresBuilder getCoverageMeasuresBuilder(File resource) {
+  private CustomCoverageMeasuresBuilder getCoverageMeasuresBuilder(InputFile resource) {
     CustomCoverageMeasuresBuilder measuresBuilder = coverageMeasures.get(resource);
     if (measuresBuilder == null) {
       measuresBuilder = CustomCoverageMeasuresBuilder.create();
@@ -159,7 +159,7 @@ public class ReportParser {
     return measuresBuilder;
   }
 
-  private void parseLineToCover(File resource, SMInputCursor cursor)
+  private void parseLineToCover(InputFile resource, SMInputCursor cursor)
     throws XMLStreamException {
     CustomCoverageMeasuresBuilder measureBuilder = getCoverageMeasuresBuilder(resource);
     checkElementName(cursor, "lineToCover");
@@ -194,7 +194,7 @@ public class ReportParser {
     return Boolean.parseBoolean(coveredAsString);
   }
 
-  private void parseTestCase(File resource, SMInputCursor cursor) throws XMLStreamException {
+  private void parseTestCase(InputFile resource, SMInputCursor cursor) throws XMLStreamException {
     UnitTestMeasuresBuilder measures = getUnitTestMeasuresBuilder(resource);
     checkElementName(cursor, "testCase");
     String name = mandatoryAttribute(cursor, NAME_ATTR);
@@ -300,7 +300,7 @@ public class ReportParser {
   }
 
   private void saveCoverageMeasure() {
-    for (Map.Entry<File, CustomCoverageMeasuresBuilder> entry : coverageMeasures.entrySet()) {
+    for (Map.Entry<InputFile, CustomCoverageMeasuresBuilder> entry : coverageMeasures.entrySet()) {
       for (Measure measure : entry.getValue().createMeasures()) {
         context.saveMeasure(entry.getKey(), measure);
       }
@@ -308,14 +308,14 @@ public class ReportParser {
   }
 
   private void saveUnitTestMeasures() {
-    for (Map.Entry<File, UnitTestMeasuresBuilder> entry : unitTestMeasures.entrySet()) {
-      Resource resource = entry.getKey();
+    for (Map.Entry<InputFile, UnitTestMeasuresBuilder> entry : unitTestMeasures.entrySet()) {
+      InputFile inputFile = entry.getKey();
       UnitTestMeasuresBuilder measuresBuilder = entry.getValue();
       for (Measure measure : measuresBuilder.createMeasures()) {
-        context.saveMeasure(resource, measure);
+        context.saveMeasure(inputFile, measure);
       }
       for (TestCase testCase : measuresBuilder.getTestCases()) {
-        MutableTestPlan testPlan = perspectives.as(MutableTestPlan.class, resource);
+        MutableTestPlan testPlan = perspectives.as(MutableTestPlan.class, inputFile);
         if (testPlan != null) {
           testPlan.addTestCase(testCase.getName())
             .setDurationInMs(testCase.getDuration())

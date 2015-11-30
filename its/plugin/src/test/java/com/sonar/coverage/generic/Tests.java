@@ -38,26 +38,12 @@ import org.sonar.wsclient.services.ResourceQuery;
 })
 public class Tests {
 
-  private static final String PLUGIN_KEY = "genericcoverage";
-
   @ClassRule
   public static final Orchestrator ORCHESTRATOR = Orchestrator.builderEnv()
     .addPlugin(FileLocation.of("../../target/sonar-generic-coverage-plugin.jar"))
     .addPlugin("java")
     .addPlugin("javascript")
     .build();
-
-  public static boolean is_after_sonar_4_2() {
-    return ORCHESTRATOR.getConfiguration().getSonarVersion().isGreaterThanOrEquals("4.2");
-  }
-
-  public static boolean is_after_plugin_1_1() {
-    return is_after_plugin("1.1");
-  }
-
-  public static boolean is_after_plugin(String version) {
-    return ORCHESTRATOR.getConfiguration().getPluginVersion(PLUGIN_KEY).isGreaterThanOrEquals(version);
-  }
 
   public static SonarScanner createSonarScannerBuild() {
     return SonarScanner.create();

@@ -25,11 +25,13 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.sonar.api.batch.SensorContext;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.DefaultFileSystem;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.measures.Metric;
-import org.sonar.api.resources.File;
 import org.sonar.api.resources.Resource;
 import org.sonar.api.test.MutableTestCase;
 import org.sonar.api.test.MutableTestPlan;
@@ -37,6 +39,7 @@ import org.sonar.api.utils.KeyValueFormat;
 import org.sonar.api.utils.SonarException;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -53,18 +56,18 @@ import static org.mockito.Mockito.when;
 public class ReportParserTest {
 
   @Mock
-  private ResourceLocator resourceLocator;
-  @Mock
   private SensorContext context;
   @Mock
   private ResourcePerspectives perspectives;
-  private File fileWithBranches;
-  private File fileWithoutBranch;
-  private File emptyFile;
+  private InputFile fileWithBranches;
+  private InputFile fileWithoutBranch;
+  private InputFile emptyFile;
+  private DefaultFileSystem fs;
 
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
+    fs = new DefaultFileSystem().setBaseDir(new File(""));
     fileWithBranches = setupFile("src/main/java/com/example/ClassWithBranches.java");
     fileWithoutBranch = setupFile("src/main/java/com/example/ClassWithoutBranch.java");
     emptyFile = setupFile("src/main/java/com/example/EmptyClass.java");
@@ -72,29 +75,29 @@ public class ReportParserTest {
 
   @Test
   public void empty_file() throws Exception {
-    File file = emptyFile;
+    InputFile file = emptyFile;
     addFileToContext(file);
     ReportParser parser = parseCoverageReportFile("src/test/resources/coverage.xml");
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
-    assertThat(parser.numberOfUnknownFiles()).isEqualTo(2);
-    assertThat(parser.firstUnknownFiles()).hasSize(2);
-    verify(context, never()).saveMeasure(any(File.class), any(Measure.class));
+    assertThat(parser.numberOfUnknownFiles()).isEqualTo(3);
+    assertThat(parser.firstUnknownFiles()).hasSize(3);
+    verify(context, never()).saveMeasure(any(Resource.class), any(Measure.class));
   }
 
   @Test
   public void ut_empty_file() throws Exception {
-    File file = emptyFile;
+    InputFile file = emptyFile;
     addFileToContext(file);
     ReportParser parser = parseReportFile("src/test/resources/unittest.xml", ReportParser.Mode.UNITTEST);
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
     assertThat(parser.numberOfUnknownFiles()).isEqualTo(1);
     assertThat(parser.firstUnknownFiles()).hasSize(1);
-    verify(context, never()).saveMeasure(any(File.class), any(Measure.class));
+    verify(context, never()).saveMeasure(any(Resource.class), any(Measure.class));
   }
 
   @Test
   public void file_without_branch() throws Exception {
-    File file = fileWithoutBranch;
+    InputFile file = fileWithoutBranch;
     addFileToContext(file);
     ReportParser parser = parseCoverageReportFile("src/test/resources/coverage.xml");
     parser.saveMeasures();
@@ -106,7 +109,7 @@ public class ReportParserTest {
 
   @Test
   public void file_with_branches() throws Exception {
-    File file = fileWithBranches;
+    InputFile file = fileWithBranches;
     addFileToContext(file);
     ReportParser parser = parseCoverageReportFile("src/test/resources/coverage.xml");
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
@@ -125,9 +128,9 @@ public class ReportParserTest {
     MutableTestCase testCase = mockMutableTestCase();
     MutableTestPlan testPlan = mockMutableTestPlan(testCase);
 
-    when(perspectives.as(eq(MutableTestPlan.class), any(Resource.class))).thenReturn(testPlan);
+    when(perspectives.as(eq(MutableTestPlan.class), any(InputFile.class))).thenReturn(testPlan);
 
-    File file = fileWithBranches;
+    InputFile file = fileWithBranches;
     addFileToContext(file);
     ReportParser parser = parseReportFile("src/test/resources/unittest2.xml", ReportParser.Mode.UNITTEST);
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
@@ -146,7 +149,7 @@ public class ReportParserTest {
 
   @Test
   public void files_with_branches_merge() throws Exception {
-    File file = fileWithBranches;
+    InputFile file = fileWithBranches;
     addFileToContext(file);
     ReportParser parser = parseCoverageReportFile("src/test/resources/coverage.xml");
     parser.parse(new java.io.File("src/test/resources/coverage2.xml"));
@@ -166,9 +169,9 @@ public class ReportParserTest {
     MutableTestCase testCase = mockMutableTestCase();
     MutableTestPlan testPlan = mockMutableTestPlan(testCase);
 
-    when(perspectives.as(eq(MutableTestPlan.class), any(Resource.class))).thenReturn(testPlan);
+    when(perspectives.as(eq(MutableTestPlan.class), any(InputFile.class))).thenReturn(testPlan);
 
-    File file = fileWithBranches;
+    InputFile file = fileWithBranches;
     addFileToContext(file);
     ReportParser parser = parseReportFile("src/test/resources/unittest.xml", ReportParser.Mode.UNITTEST);
     parser.parse(new java.io.File("src/test/resources/unittest2.xml"));
@@ -189,7 +192,7 @@ public class ReportParserTest {
 
   @Test
   public void it_files_with_branches_merge() throws Exception {
-    File file = fileWithBranches;
+    InputFile file = fileWithBranches;
     addFileToContext(file);
     ReportParser parser = parseReportFile("src/test/resources/coverage.xml", ReportParser.Mode.IT_COVERAGE);
     parser.parse(new java.io.File("src/test/resources/coverage2.xml"));
@@ -392,8 +395,8 @@ public class ReportParserTest {
     parseCoverageReportFile("xxx.xml");
   }
 
-  private void addFileToContext(File file1) {
-    when(context.getResource(file1)).thenReturn(file1);
+  private void addFileToContext(InputFile inputFile) {
+    when(context.getResource(inputFile)).thenReturn(mock(Resource.class));
   }
 
   private ReportParser parseCoverageReport(String string) throws Exception {
@@ -406,7 +409,7 @@ public class ReportParserTest {
 
   private ReportParser parseReport(ReportParser.Mode mode, String string) throws Exception {
     ByteArrayInputStream inputStream = new ByteArrayInputStream(string.getBytes());
-    ReportParser reportParser = new ReportParser(resourceLocator, context, perspectives, mode);
+    ReportParser reportParser = new ReportParser(fs, context, perspectives, mode);
     reportParser.parse(inputStream);
     return reportParser;
   }
@@ -416,7 +419,7 @@ public class ReportParserTest {
   }
 
   private ReportParser parseReportFile(String reportLocation, ReportParser.Mode mode) throws Exception {
-    ReportParser reportParser = new ReportParser(resourceLocator, context, perspectives, mode);
+    ReportParser reportParser = new ReportParser(fs, context, perspectives, mode);
     reportParser.parse(new java.io.File(reportLocation));
     return reportParser;
   }
@@ -425,10 +428,10 @@ public class ReportParserTest {
     return refEq(new Measure(metric).setData(KeyValueFormat.format(data)), "persistenceMode");
   }
 
-  private org.sonar.api.resources.File setupFile(String path) {
-    File sonarFile = mock(File.class, "File[" + path + "]");
-    when(resourceLocator.getResource(path)).thenReturn(sonarFile);
-    return sonarFile;
+  private InputFile setupFile(String path) {
+    DefaultInputFile inputFile = new DefaultInputFile(path);
+    fs.add(inputFile);
+    return inputFile;
   }
 
   private MutableTestPlan mockMutableTestPlan(MutableTestCase testCase) {

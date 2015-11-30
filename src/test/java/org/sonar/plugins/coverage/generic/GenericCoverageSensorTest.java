@@ -20,18 +20,19 @@
 package org.sonar.plugins.coverage.generic;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.sonar.api.batch.SensorContext;
-import org.sonar.api.batch.fs.FileSystem;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.DefaultFileSystem;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.config.Settings;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.resources.Project;
-import org.sonar.api.resources.ProjectFileSystem;
+import org.sonar.api.resources.Resource;
 import org.sonar.api.utils.SonarException;
 
 import java.io.File;
@@ -49,16 +50,14 @@ import static org.mockito.Mockito.when;
 public class GenericCoverageSensorTest {
 
   @Mock
-  private Settings settings;
-  @Mock
   private Project project;
-  @Mock
-  private FileSystem fs;
   @Mock
   private SensorContext context;
   @Mock
   private ResourcePerspectives perspectives;
   private GenericCoverageSensor sensor;
+  private DefaultFileSystem fs;
+  private Settings settings;
 
   private final File baseDir = new File("src/test/resources/project1").getAbsoluteFile();
   private StubLogger logger;
@@ -66,14 +65,10 @@ public class GenericCoverageSensorTest {
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
+    settings = new Settings();
+    fs = new DefaultFileSystem().setBaseDir(baseDir);
     logger = new StubLogger();
     sensor = new GenericCoverageSensor(settings, fs, perspectives);
-    when(fs.baseDir()).thenReturn(baseDir);
-    ProjectFileSystem projectFs = mock(ProjectFileSystem.class);
-    when(project.getFileSystem()).thenReturn(projectFs);
-    when(projectFs.getSourceDirs()).thenReturn(ImmutableList.of(new File(baseDir, "src")));
-    when(projectFs.getTestDirs()).thenReturn(ImmutableList.of(new File(baseDir, "test")));
-    when(projectFs.getBasedir()).thenReturn(baseDir);
   }
 
   private List<StubLogger.LoggingEvent> getLoggingEvents() {
@@ -110,8 +105,8 @@ public class GenericCoverageSensorTest {
   @Test
   public void analyse_report_with_deprecated_key() throws Exception {
     configureOldReportPath("coverage.xml");
-    org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
-    sensor.analyseWithLogger(project, context, logger);
+    InputFile resource = addFileToContext("src/foobar.js");
+    sensor.analyseWithLogger(context, logger);
     verify(context, times(3)).saveMeasure(eq(resource), any(Measure.class));
 
     assertThat(getLoggingEvents().get(0).getMessage())
@@ -127,9 +122,9 @@ public class GenericCoverageSensorTest {
     configureReportPaths("coverage.xml");
     configureITReportPaths("coverage.xml");
     configureUTReportPaths("unittest.xml");
-    org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
-    org.sonar.api.resources.File testResource = addFileToContext("src/test/resources/project1/test/foobar_test.js");
-    sensor.analyseWithLogger(project, context, logger);
+    InputFile resource = addFileToContext("src/foobar.js");
+    InputFile testResource = addFileToContext("test/foobar_test.js");
+    sensor.analyseWithLogger(context, logger);
     verify(context, times(6)).saveMeasure(eq(resource), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(testResource), any(Measure.class));
 
@@ -146,12 +141,12 @@ public class GenericCoverageSensorTest {
     configureReportPaths("coverage.xml,coverage2.xml");
     configureITReportPaths("coverage.xml,coverage2.xml");
     configureUTReportPaths("unittest.xml,unittest2.xml");
-    org.sonar.api.resources.File resource1 = addFileToContext("src/test/resources/project1/src/foobar.js");
-    org.sonar.api.resources.File resource2 = addFileToContext("src/test/resources/project1/src/helloworld.js");
-    org.sonar.api.resources.File resource3 = addFileToContext("src/test/resources/project1/src/third.js");
-    org.sonar.api.resources.File testResource1 = addFileToContext("src/test/resources/project1/test/foobar_test.js");
-    org.sonar.api.resources.File testResource2 = addFileToContext("src/test/resources/project1/test/helloworld_test.js");
-    sensor.analyseWithLogger(project, context, logger);
+    InputFile resource1 = addFileToContext("src/foobar.js");
+    InputFile resource2 = addFileToContext("src/helloworld.js");
+    InputFile resource3 = addFileToContext("src/third.js");
+    InputFile testResource1 = addFileToContext("test/foobar_test.js");
+    InputFile testResource2 = addFileToContext("test/helloworld_test.js");
+    sensor.analyseWithLogger(context, logger);
     verify(context, times(6)).saveMeasure(eq(resource1), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(resource2), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(resource3), any(Measure.class));
@@ -173,7 +168,7 @@ public class GenericCoverageSensorTest {
   public void analyse_report_with_absolute_path() throws Exception {
     File reportFile = new File(baseDir, "coverage.xml");
     configureReportPaths(reportFile.getAbsolutePath());
-    org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
+    InputFile resource = addFileToContext("src/foobar.js");
     sensor.analyse(project, context);
     verify(context, times(3)).saveMeasure(eq(resource), any(Measure.class));
   }
@@ -183,11 +178,11 @@ public class GenericCoverageSensorTest {
     configureReportPaths(new File(baseDir, "coverage.xml").getAbsolutePath() + "," + new File(baseDir, "coverage2.xml").getAbsolutePath());
     configureITReportPaths(new File(baseDir, "coverage.xml").getAbsolutePath() + "," + new File(baseDir, "coverage2.xml").getAbsolutePath());
     configureUTReportPaths(new File(baseDir, "unittest.xml").getAbsolutePath() + "," + new File(baseDir, "unittest2.xml").getAbsolutePath());
-    org.sonar.api.resources.File resource = addFileToContext("src/test/resources/project1/src/foobar.js");
-    org.sonar.api.resources.File resource2 = addFileToContext("src/test/resources/project1/src/helloworld.js");
-    org.sonar.api.resources.File testResource = addFileToContext("src/test/resources/project1/test/foobar_test.js");
-    org.sonar.api.resources.File testResource2 = addFileToContext("src/test/resources/project1/test/helloworld_test.js");
-    sensor.analyseWithLogger(project, context, logger);
+    InputFile resource = addFileToContext("src/foobar.js");
+    InputFile resource2 = addFileToContext("src/helloworld.js");
+    InputFile testResource = addFileToContext("test/foobar_test.js");
+    InputFile testResource2 = addFileToContext("test/helloworld_test.js");
+    sensor.analyseWithLogger(context, logger);
     verify(context, times(6)).saveMeasure(eq(resource), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(resource2), any(Measure.class));
     verify(context, times(6)).saveMeasure(eq(testResource), any(Measure.class));
@@ -209,7 +204,7 @@ public class GenericCoverageSensorTest {
     configureReportPaths("coverage_with_2_unknown_files.xml");
     configureITReportPaths("coverage_with_2_unknown_files.xml");
     configureUTReportPaths("unittest_with_2_unknown_files.xml");
-    sensor.analyseWithLogger(project, context, logger);
+    sensor.analyseWithLogger(context, logger);
     assertThat(getLoggingEvents().get(2).getMessage()).contains("coverage data ignored for 2 unknown files");
     assertThat(getLoggingEvents().get(5).getMessage()).contains("IT coverage data ignored for 2 unknown files");
     assertThat(getLoggingEvents().get(8).getMessage()).contains("unit test data ignored for 2 unknown files");
@@ -220,7 +215,7 @@ public class GenericCoverageSensorTest {
     configureReportPaths("coverage_with_7_unknown_files.xml");
     configureITReportPaths("coverage_with_7_unknown_files.xml");
     configureUTReportPaths("unittest_with_7_unknown_files.xml");
-    sensor.analyseWithLogger(project, context, logger);
+    sensor.analyseWithLogger(context, logger);
     String message = getLoggingEvents().get(2).getMessage();
     assertThat(message).contains("coverage data ignored for 7 unknown files");
     assertThat(message).contains("unknown1.js");
@@ -238,20 +233,20 @@ public class GenericCoverageSensorTest {
   @Test
   public void analyse_report_not_found() throws Exception {
     configureReportPaths("xxx");
-    sensor.analyseWithLogger(project, context, logger);
+    sensor.analyseWithLogger(context, logger);
     verifyZeroInteractions(context);
     assertThat(getLoggingEvents().get(1).getLevel()).isEqualTo("warn");
     assertThat(getLoggingEvents().get(1).getMessage()).contains("Cannot find coverage");
     configureReportPaths("");
     configureITReportPaths("xxx");
-    sensor.analyseWithLogger(project, context, logger);
+    sensor.analyseWithLogger(context, logger);
     verifyZeroInteractions(context);
     assertThat(getLoggingEvents().get(4).getLevel()).isEqualTo("warn");
     assertThat(getLoggingEvents().get(4).getMessage()).contains("Cannot find IT coverage");
     configureReportPaths("");
     configureITReportPaths("");
     configureUTReportPaths("xxx");
-    sensor.analyseWithLogger(project, context, logger);
+    sensor.analyseWithLogger(context, logger);
     verifyZeroInteractions(context);
     assertThat(getLoggingEvents().get(8).getLevel()).isEqualTo("warn");
     assertThat(getLoggingEvents().get(8).getMessage()).contains("Cannot find unit test");
@@ -299,25 +294,27 @@ public class GenericCoverageSensorTest {
   }
 
   private void configureOldReportPath(String reportPath) {
-    when(settings.getString(GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY)).thenReturn(reportPath);
+    settings.setProperty(GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY, reportPath);
   }
 
   private void configureReportPaths(String reportPaths) {
-    when(settings.getString(GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY)).thenReturn(reportPaths);
+    settings.setProperty(GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY, reportPaths);
   }
 
   private void configureITReportPaths(String itReportPaths) {
-    when(settings.getString(GenericCoveragePlugin.IT_REPORT_PATHS_PROPERTY_KEY)).thenReturn(itReportPaths);
+    settings.setProperty(GenericCoveragePlugin.IT_REPORT_PATHS_PROPERTY_KEY, itReportPaths);
   }
 
   private void configureUTReportPaths(String utReportPaths) {
-    when(settings.getString(GenericCoveragePlugin.UNIT_TEST_REPORT_PATHS_PROPERTY_KEY)).thenReturn(utReportPaths);
+    settings.setProperty(GenericCoveragePlugin.UNIT_TEST_REPORT_PATHS_PROPERTY_KEY, utReportPaths);
   }
 
-  private org.sonar.api.resources.File addFileToContext(String filePath) {
-    org.sonar.api.resources.File sonarFile = org.sonar.api.resources.File.fromIOFile(new File(filePath), project);
-    when(context.getResource(sonarFile)).thenReturn(sonarFile);
-    return sonarFile;
+  private InputFile addFileToContext(String filePath) {
+    DefaultInputFile inputFile = new DefaultInputFile(filePath);
+    inputFile.setAbsolutePath(filePath);
+    fs.add(inputFile);
+    when(context.getResource(inputFile)).thenReturn(mock(Resource.class));
+    return inputFile;
   }
 
 }

@@ -36,7 +36,7 @@ public class GenericCoveragePlugin extends SonarPlugin {
 
   @Override
   public List getExtensions() {
-    ImmutableList.Builder builder = ImmutableList.builder();
+    ImmutableList.Builder<Object> builder = ImmutableList.builder();
     builder.add(GenericCoverageSensor.class);
     builder.addAll(pluginProperties());
     return builder.build();
