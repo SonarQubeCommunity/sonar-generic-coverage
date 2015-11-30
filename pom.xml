@@ -42,7 +42,7 @@
 
   <properties>
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
-    <sonar.version>4.2</sonar.version>
+    <sonar.version>4.5.2</sonar.version>
 
     <!-- Configuration for sonar-packaging-maven-plugin -->
     <sonar.pluginKey>genericcoverage</sonar.pluginKey>
