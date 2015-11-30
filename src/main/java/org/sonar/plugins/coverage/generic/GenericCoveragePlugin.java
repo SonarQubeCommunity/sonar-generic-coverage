@@ -20,19 +20,19 @@
 package org.sonar.plugins.coverage.generic;
 
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 import org.sonar.api.SonarPlugin;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
-
-import java.util.List;
 
 public class GenericCoveragePlugin extends SonarPlugin {
 
   private static final String CATEGORY = "Generic Coverage";
   public static final String OLD_REPORT_PATH_PROPERTY_KEY = "sonar.genericcoverage.reportPath";
-  public static final String REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.reportPaths";
-  public static final String IT_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.itReportPaths";
+  public static final String COVERAGE_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.reportPaths";
+  public static final String IT_COVERAGE_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.itReportPaths";
   public static final String UNIT_TEST_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.unitTestReportPaths";
+  public static final String OVERALL_COVERAGE_TEST_REPORT_PATHS_PROPERTY_KEY = "sonar.genericcoverage.overallTestReportPaths";
 
   @Override
   public List getExtensions() {
@@ -45,29 +45,36 @@ public class GenericCoveragePlugin extends SonarPlugin {
   private static ImmutableList<PropertyDefinition> pluginProperties() {
     return ImmutableList.of(
 
-      PropertyDefinition.builder(REPORT_PATHS_PROPERTY_KEY)
+      PropertyDefinition.builder(COVERAGE_REPORT_PATHS_PROPERTY_KEY)
         .name("Coverage report paths")
         .description("List of comma-separated paths (absolute or relative) containing coverage report.")
         .category(CATEGORY)
         .onQualifiers(Qualifiers.PROJECT)
         .build(),
 
-      PropertyDefinition.builder(IT_REPORT_PATHS_PROPERTY_KEY)
+      PropertyDefinition.builder(IT_COVERAGE_REPORT_PATHS_PROPERTY_KEY)
         .name("Integration tests coverage report paths")
         .description("List of comma-separated paths (absolute or relative) containing integration tests coverage report.")
         .category(CATEGORY)
         .onQualifiers(Qualifiers.PROJECT)
         .build(),
 
+      PropertyDefinition.builder(OVERALL_COVERAGE_TEST_REPORT_PATHS_PROPERTY_KEY)
+        .name("Overall tests coverage report paths")
+        .description("List of comma-separated paths (absolute or relative) containing overall tests coverage report.")
+        .category(CATEGORY)
+        .onQualifiers(Qualifiers.PROJECT)
+        .build(),
+
       PropertyDefinition.builder(UNIT_TEST_REPORT_PATHS_PROPERTY_KEY)
-        .name("Unit tests report paths")
-        .description("List of comma-separated paths (absolute or relative) containing unit tests report.")
+        .name("Unit tests results report paths")
+        .description("List of comma-separated paths (absolute or relative) containing unit tests results report.")
         .category(CATEGORY)
         .onQualifiers(Qualifiers.PROJECT)
         .build(),
 
       deprecatedPropertyDefinition(OLD_REPORT_PATH_PROPERTY_KEY)
-    );
+      );
   }
 
   private static PropertyDefinition deprecatedPropertyDefinition(String oldKey) {

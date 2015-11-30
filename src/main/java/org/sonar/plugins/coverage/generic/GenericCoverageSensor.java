@@ -24,6 +24,9 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import java.io.File;
+import java.util.List;
+import javax.xml.stream.XMLStreamException;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +37,6 @@ import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.config.Settings;
 import org.sonar.api.resources.Project;
 import org.sonar.api.utils.SonarException;
-
-import javax.xml.stream.XMLStreamException;
-import java.io.File;
-import java.util.List;
 
 public class GenericCoverageSensor implements Sensor {
 
@@ -53,15 +52,15 @@ public class GenericCoverageSensor implements Sensor {
 
   @Override
   public boolean shouldExecuteOnProject(Project project) {
-    return StringUtils.isNotEmpty(reportPath(null)) || StringUtils.isNotEmpty(itReportPath()) || StringUtils.isNotEmpty(unitTestReportPath());
+    return StringUtils.isNotEmpty(coverageReportPath(null)) || StringUtils.isNotEmpty(itReportPath()) || StringUtils.isNotEmpty(unitTestReportPath());
   }
 
-  private String reportPath(Logger logger) {
+  private String coverageReportPath(Logger logger) {
     String result = settings.getString(GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
     if (Strings.isNullOrEmpty(result)) {
-      result = settings.getString(GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY);
+      result = settings.getString(GenericCoveragePlugin.COVERAGE_REPORT_PATHS_PROPERTY_KEY);
     } else if (logger != null) {
-      logDeprecatedPropertyUsage(logger, GenericCoveragePlugin.REPORT_PATHS_PROPERTY_KEY, GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
+      logDeprecatedPropertyUsage(logger, GenericCoveragePlugin.COVERAGE_REPORT_PATHS_PROPERTY_KEY, GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
     }
     return result;
   }
@@ -71,7 +70,11 @@ public class GenericCoverageSensor implements Sensor {
   }
 
   private String itReportPath() {
-    return settings.getString(GenericCoveragePlugin.IT_REPORT_PATHS_PROPERTY_KEY);
+    return settings.getString(GenericCoveragePlugin.IT_COVERAGE_REPORT_PATHS_PROPERTY_KEY);
+  }
+
+  private String overallReportPath() {
+    return settings.getString(GenericCoveragePlugin.OVERALL_COVERAGE_TEST_REPORT_PATHS_PROPERTY_KEY);
   }
 
   private String unitTestReportPath() {
@@ -88,9 +91,12 @@ public class GenericCoverageSensor implements Sensor {
   }
 
   public void analyseWithLogger(Project project, SensorContext context, Logger logger) {
-    boolean ok = loadReport(project, context, logger, ReportParser.Mode.COVERAGE, reportPath(logger));
+    boolean ok = loadReport(project, context, logger, ReportParser.Mode.COVERAGE, coverageReportPath(logger));
     if (ok) {
       ok = loadReport(project, context, logger, ReportParser.Mode.IT_COVERAGE, itReportPath());
+    }
+    if (ok) {
+      ok = loadReport(project, context, logger, ReportParser.Mode.OVERALL_COVERAGE, overallReportPath());
     }
     if (ok) {
       loadReport(project, context, logger, ReportParser.Mode.UNITTEST, unitTestReportPath());
@@ -139,6 +145,8 @@ public class GenericCoverageSensor implements Sensor {
       return "coverage";
     } else if (ReportParser.Mode.IT_COVERAGE == mode) {
       return "IT coverage";
+    } else if (ReportParser.Mode.OVERALL_COVERAGE == mode) {
+      return "Overall coverage";
     } else {
       return "unit test";
     }
