@@ -31,7 +31,7 @@ CI)
        -Dsonar.password=$SONAR_PASSWORD
 
 
-  elif [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ -n "$SONAR_GITHUB_OAUTH" ]; then
+  elif [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ -n "${SONAR_GITHUB_OAUTH-}" ]; then
     # For security reasons environment variables are not available on the pull requests
     # coming from outside repositories
     # http://docs.travis-ci.com/user/pull-requests/#Security-Restrictions-when-testing-Pull-Requests

@@ -3,12 +3,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.codehaus.sonar-plugins</groupId>
+    <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>18</version>
+    <version>24</version>
   </parent>
 
-  <groupId>org.codehaus.sonar-plugins</groupId>
+  <groupId>org.sonarsource.generic-coverage</groupId>
   <artifactId>sonar-generic-coverage-plugin</artifactId>
   <version>1.2-SNAPSHOT</version>
   <packaging>sonar-plugin</packaging>
@@ -43,6 +43,12 @@
   <properties>
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
     <sonar.version>4.2</sonar.version>
+
+    <!-- Configuration for sonar-packaging-maven-plugin -->
+    <sonar.pluginKey>genericcoverage</sonar.pluginKey>
+    <sonar.pluginName>Generic Coverage</sonar.pluginName>
+    <sonar.pluginClass>org.sonar.plugins.coverage.generic.GenericCoveragePlugin</sonar.pluginClass>
+    <sonar.pluginDescription><![CDATA[Imports coverage reports defined a given format.]]></sonar.pluginDescription>
   </properties>
 
   <dependencies>
@@ -91,16 +97,6 @@
     </testResources>
 
     <plugins>
-      <plugin>
-        <groupId>org.codehaus.sonar</groupId>
-        <artifactId>sonar-packaging-maven-plugin</artifactId>
-        <configuration>
-          <pluginKey>genericcoverage</pluginKey>
-          <pluginName>Generic Coverage</pluginName>
-          <pluginDescription><![CDATA[Imports coverage reports defined a given format.]]></pluginDescription>
-          <pluginClass>org.sonar.plugins.coverage.generic.GenericCoveragePlugin</pluginClass>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>

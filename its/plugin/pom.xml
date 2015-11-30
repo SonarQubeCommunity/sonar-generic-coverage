@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>23</version>
+    <version>24</version>
   </parent>
 
   <artifactId>it-generic-coverage</artifactId>
@@ -30,7 +30,7 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
-      <version>4.10</version>
+      <version>4.11</version>
     </dependency>
     <dependency>
       <groupId>org.easytesting</groupId>
