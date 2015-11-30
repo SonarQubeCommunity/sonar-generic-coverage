@@ -37,7 +37,7 @@
   </scm>
   <issueManagement>
     <system>JIRA</system>
-    <url>https://jira.codehaus.org/browse/SONARCOVRG</url>
+    <url>https://jira.sonarsource.com/projects/SONARCOVRG</url>
   </issueManagement>
 
   <properties>
