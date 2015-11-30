@@ -20,7 +20,7 @@
 package com.sonar.coverage.generic;
 
 import com.sonar.orchestrator.Orchestrator;
-import com.sonar.orchestrator.build.SonarRunner;
+import com.sonar.orchestrator.build.SonarScanner;
 import com.sonar.orchestrator.locator.FileLocation;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
@@ -59,8 +59,8 @@ public class Tests {
     return ORCHESTRATOR.getConfiguration().getPluginVersion(PLUGIN_KEY).isGreaterThanOrEquals(version);
   }
 
-  public static SonarRunner createSonarRunnerBuild() {
-    return SonarRunner.create();
+  public static SonarScanner createSonarScannerBuild() {
+    return SonarScanner.create();
   }
 
   public static Measure getMeasure(String resourceKey, String metricKey) {

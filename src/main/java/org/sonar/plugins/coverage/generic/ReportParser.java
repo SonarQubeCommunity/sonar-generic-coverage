@@ -71,8 +71,8 @@ public class ReportParser {
   private int numberOfUnknownFiles;
   private final List<String> firstUnknownFiles = Lists.newArrayList();
   private final Set<String> matchedFileKeys = Sets.newHashSet();
-  private final Map<File, CustomCoverageMeasuresBuilder> coverageMeasures = new HashMap<File, CustomCoverageMeasuresBuilder>();
-  private final Map<File, UnitTestMeasuresBuilder> unitTestMeasures = new HashMap<File, UnitTestMeasuresBuilder>();
+  private final Map<File, CustomCoverageMeasuresBuilder> coverageMeasures = new HashMap<>();
+  private final Map<File, UnitTestMeasuresBuilder> unitTestMeasures = new HashMap<>();
 
   public ReportParser(ResourceLocator resourceLocator, SensorContext context, ResourcePerspectives perspectives, Mode mode) {
     this.resourceLocator = resourceLocator;

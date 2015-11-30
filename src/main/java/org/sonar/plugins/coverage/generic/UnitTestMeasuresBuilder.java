@@ -31,8 +31,11 @@ import java.util.Map;
 
 public final class UnitTestMeasuresBuilder {
 
-  private final Map<String, TestCase> index = new HashMap<String, TestCase>();
-  private int test = 0, failure = 0, error = 0, skipped = 0;
+  private final Map<String, TestCase> index = new HashMap<>();
+  private int test = 0;
+  private int failure = 0;
+  private int error = 0;
+  private int skipped = 0;
   private long duration = 0L;
 
   private UnitTestMeasuresBuilder() {

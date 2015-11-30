@@ -28,7 +28,7 @@ import java.util.List;
 
 public class StubLogger implements Logger {
 
-  private List<LoggingEvent> loggingEvents = new ArrayList<LoggingEvent>();
+  private List<LoggingEvent> loggingEvents = new ArrayList<>();
 
   class LoggingEvent {
     private String level;

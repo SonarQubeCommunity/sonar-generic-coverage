@@ -20,7 +20,7 @@
 package com.sonar.coverage.generic;
 
 import com.sonar.orchestrator.Orchestrator;
-import com.sonar.orchestrator.build.SonarRunner;
+import com.sonar.orchestrator.build.SonarScanner;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -39,7 +39,7 @@ public class SingleLanguageTest {
 
   @BeforeClass
   public static void inspectProject() {
-    SonarRunner sonarRunner = Tests.createSonarRunnerBuild()
+    SonarScanner sonarRunner = Tests.createSonarScannerBuild()
       .setProjectDir(new File("projects/single-language"))
       .setProjectKey(PROJECT)
       .setProjectName("SonarSource::GenericCoverage::IT-SingleLanguage")

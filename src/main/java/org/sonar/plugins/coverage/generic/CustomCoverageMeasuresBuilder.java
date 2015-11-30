@@ -57,7 +57,9 @@ public final class CustomCoverageMeasuresBuilder {
     .put(METRIC.COVERED_CONDITIONS_BY_LINE, CoreMetrics.IT_COVERED_CONDITIONS_BY_LINE)
     .put(METRIC.CONDITIONS_BY_LINE, CoreMetrics.IT_CONDITIONS_BY_LINE).build();
 
-  private int totalCoveredLines = 0, totalConditions = 0, totalCoveredConditions = 0;
+  private int totalCoveredLines = 0;
+  private int totalConditions = 0;
+  private int totalCoveredConditions = 0;
   private final SortedMap<Integer, Integer> hitsByLine = Maps.newTreeMap();
   private final SortedMap<Integer, Integer> conditionsByLine = Maps.newTreeMap();
   private final SortedMap<Integer, Integer> coveredConditionsByLine = Maps.newTreeMap();

@@ -20,7 +20,7 @@
 package com.sonar.coverage.generic;
 
 import com.sonar.orchestrator.Orchestrator;
-import com.sonar.orchestrator.build.SonarRunner;
+import com.sonar.orchestrator.build.SonarScanner;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -41,7 +41,7 @@ public class MultiLanguageTest {
   @BeforeClass
   public static void inspectProject() {
     Assume.assumeTrue(Tests.is_after_sonar_4_2());
-    SonarRunner sonarRunner = Tests.createSonarRunnerBuild()
+    SonarScanner sonarRunner = Tests.createSonarScannerBuild()
       .setProjectDir(new File("projects/multi-language"))
       .setProjectKey(PROJECT)
       .setProjectName("SonarSource::GenericCoverage::IT-MultiLanguage")
