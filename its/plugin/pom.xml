@@ -15,10 +15,6 @@
   <name>SonarQube Generic Coverage plugin :: IT</name>
   <inceptionYear>2014</inceptionYear>
 
-  <properties>
-    <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.sonarsource.orchestrator</groupId>

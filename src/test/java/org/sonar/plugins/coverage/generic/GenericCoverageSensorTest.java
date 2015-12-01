@@ -306,6 +306,20 @@ public class GenericCoverageSensorTest {
     sensor.analyseWithLogger(context, logger);
   }
 
+  @Test
+  public void analyse_report_with_unittest_reports_on_main_files() throws Exception {
+    configureUTReportPaths("unittest.xml");
+    String path = "test/foobar_test.js";
+    DefaultInputFile inputFile = new DefaultInputFile(path).setAbsolutePath(path).setType(InputFile.Type.MAIN).setLanguage("bla");
+    fs.add(inputFile);
+    when(context.getResource(inputFile)).thenReturn(mock(Resource.class));
+
+    thrown.expectMessage("Line 2 of report unittest.xml refers to a file which is not configured as a test file: test/foobar_test.js");
+    thrown.expect(IllegalStateException.class);
+
+    sensor.analyseWithLogger(context, logger);
+  }
+
   @Test(expected = IllegalStateException.class)
   public void analyse_txt_report() throws Exception {
     configureReportPaths("not-xml.txt");
@@ -380,7 +394,7 @@ public class GenericCoverageSensorTest {
   }
 
   private InputFile addFileToContext(String filePath) {
-    DefaultInputFile inputFile = new DefaultInputFile(filePath).setAbsolutePath(filePath).setLanguage("bla");
+    DefaultInputFile inputFile = new DefaultInputFile(filePath).setAbsolutePath(filePath).setLanguage("bla").setType(InputFile.Type.TEST);
     fs.add(inputFile);
     when(context.getResource(inputFile)).thenReturn(mock(Resource.class));
     return inputFile;

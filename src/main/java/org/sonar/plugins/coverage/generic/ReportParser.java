@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.coverage.generic;
 
+import com.google.common.base.Preconditions;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.sonar.api.batch.SensorContext;
@@ -119,9 +120,21 @@ public class ReportParser {
         }
         continue;
       }
-      if (resource.language() == null) {
-        throw new IllegalStateException(
-          "Line " + fileCursor.getCursorLocation().getLineNumber() + " of report " + currentReportName + " refers to a file with an unknown language: " + filePath);
+      Preconditions.checkState(
+        resource.language() != null,
+        "Line %s of report %s refers to a file with an unknown language: %s",
+        fileCursor.getCursorLocation().getLineNumber(),
+        currentReportName,
+        filePath
+      );
+      if (mode == Mode.UNITTEST) {
+        Preconditions.checkState(
+          resource.type() != InputFile.Type.MAIN,
+          "Line %s of report %s refers to a file which is not configured as a test file: %s",
+          fileCursor.getCursorLocation().getLineNumber(),
+          currentReportName,
+          filePath
+        );
       }
       matchedFileKeys.add(resource.absolutePath());
 

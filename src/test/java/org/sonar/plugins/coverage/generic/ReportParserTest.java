@@ -428,7 +428,7 @@ public class ReportParserTest {
   }
 
   private InputFile setupFile(String path) {
-    DefaultInputFile inputFile = new DefaultInputFile(path).setLanguage("bla");
+    DefaultInputFile inputFile = new DefaultInputFile(path).setLanguage("bla").setType(InputFile.Type.TEST);
     fs.add(inputFile);
     return inputFile;
   }
