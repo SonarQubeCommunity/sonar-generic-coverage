@@ -151,7 +151,7 @@ public class ReportParserTest {
     InputFile file = fileWithBranches;
     addFileToContext(file);
     ReportParser parser = parseCoverageReportFile("src/test/resources/coverage.xml");
-    parser.parse(new java.io.File("src/test/resources/coverage2.xml"));
+    parser.parse(new java.io.File("src/test/resources/coverage2.xml"), "coverage2.xml");
     parser.saveMeasures();
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
     verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.LINES_TO_COVER, 2.)));
@@ -173,7 +173,7 @@ public class ReportParserTest {
     InputFile file = fileWithBranches;
     addFileToContext(file);
     ReportParser parser = parseReportFile("src/test/resources/unittest.xml", ReportParser.Mode.UNITTEST);
-    parser.parse(new java.io.File("src/test/resources/unittest2.xml"));
+    parser.parse(new java.io.File("src/test/resources/unittest2.xml"), "unittest2.xml");
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
     parser.saveMeasures();
     verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.SKIPPED_TESTS, 1.)));
@@ -194,7 +194,7 @@ public class ReportParserTest {
     InputFile file = fileWithBranches;
     addFileToContext(file);
     ReportParser parser = parseReportFile("src/test/resources/coverage.xml", ReportParser.Mode.IT_COVERAGE);
-    parser.parse(new java.io.File("src/test/resources/coverage2.xml"));
+    parser.parse(new java.io.File("src/test/resources/coverage2.xml"), "coverage2.xml");
     parser.saveMeasures();
     assertThat(parser.numberOfMatchedFiles()).isEqualTo(1);
     verify(context).saveMeasure(eq(file), refEq(new Measure(CoreMetrics.IT_LINES_TO_COVER, 2.)));
@@ -419,7 +419,7 @@ public class ReportParserTest {
 
   private ReportParser parseReportFile(String reportLocation, ReportParser.Mode mode) throws Exception {
     ReportParser reportParser = new ReportParser(fs, context, perspectives, mode);
-    reportParser.parse(new java.io.File(reportLocation));
+    reportParser.parse(new java.io.File(reportLocation), reportLocation);
     return reportParser;
   }
 
@@ -428,7 +428,7 @@ public class ReportParserTest {
   }
 
   private InputFile setupFile(String path) {
-    DefaultInputFile inputFile = new DefaultInputFile(path);
+    DefaultInputFile inputFile = new DefaultInputFile(path).setLanguage("bla");
     fs.add(inputFile);
     return inputFile;
   }

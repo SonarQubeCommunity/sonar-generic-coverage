@@ -62,6 +62,7 @@ public class ReportParser {
   private final Mode mode;
 
   private int numberOfUnknownFiles;
+  private String currentReportName;
   private final List<String> firstUnknownFiles = new ArrayList<>();
   private final Set<String> matchedFileKeys = new HashSet<>();
   private final Map<InputFile, CustomCoverageMeasuresBuilder> coverageMeasures = new HashMap<>();
@@ -74,14 +75,14 @@ public class ReportParser {
     this.mode = mode;
   }
 
-  public void parse(java.io.File reportFile)
-    throws XMLStreamException {
+  public void parse(java.io.File reportFile, String reportName) throws XMLStreamException {
     InputStream inputStream;
     try {
       inputStream = new FileInputStream(reportFile);
     } catch (FileNotFoundException e) {
       throw new IllegalStateException(e);
     }
+    currentReportName = reportName;
     parse(inputStream);
   }
 
@@ -117,6 +118,10 @@ public class ReportParser {
           firstUnknownFiles.add(filePath);
         }
         continue;
+      }
+      if (resource.language() == null) {
+        throw new IllegalStateException(
+          "Line " + fileCursor.getCursorLocation().getLineNumber() + " of report " + currentReportName + " refers to a file with an unknown language: " + filePath);
       }
       matchedFileKeys.add(resource.absolutePath());
 

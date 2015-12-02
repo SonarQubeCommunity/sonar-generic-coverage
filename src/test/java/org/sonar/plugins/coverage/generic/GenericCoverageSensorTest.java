@@ -21,7 +21,9 @@ package org.sonar.plugins.coverage.generic;
 
 import com.google.common.base.Splitter;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.sonar.api.batch.SensorContext;
@@ -47,6 +49,9 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class GenericCoverageSensorTest {
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Mock
   private Project project;
@@ -287,6 +292,20 @@ public class GenericCoverageSensorTest {
     assertThat(getLoggingEvents().get(13).getLevel()).isEqualTo("warn");
   }
 
+  @Test
+  public void analyse_report_with_language_unknown_files() throws Exception {
+    configureReportPaths("coverage.xml");
+    String path = "src/foobar.js";
+    DefaultInputFile inputFile = new DefaultInputFile(path).setAbsolutePath(path);
+    fs.add(inputFile);
+    when(context.getResource(inputFile)).thenReturn(mock(Resource.class));
+
+    thrown.expectMessage("Line 2 of report coverage.xml refers to a file with an unknown language: src/foobar.js");
+    thrown.expect(IllegalStateException.class);
+
+    sensor.analyseWithLogger(context, logger);
+  }
+
   @Test(expected = IllegalStateException.class)
   public void analyse_txt_report() throws Exception {
     configureReportPaths("not-xml.txt");
@@ -361,8 +380,7 @@ public class GenericCoverageSensorTest {
   }
 
   private InputFile addFileToContext(String filePath) {
-    DefaultInputFile inputFile = new DefaultInputFile(filePath);
-    inputFile.setAbsolutePath(filePath);
+    DefaultInputFile inputFile = new DefaultInputFile(filePath).setAbsolutePath(filePath).setLanguage("bla");
     fs.add(inputFile);
     when(context.getResource(inputFile)).thenReturn(mock(Resource.class));
     return inputFile;

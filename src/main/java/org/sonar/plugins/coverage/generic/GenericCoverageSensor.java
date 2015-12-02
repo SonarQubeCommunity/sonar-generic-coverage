@@ -123,7 +123,7 @@ public class GenericCoverageSensor implements Sensor {
       }
 
       try {
-        parser.parse(reportFile);
+        parser.parse(reportFile, path);
       } catch (XMLStreamException e) {
         throw new IllegalStateException("Cannot parse " + modeString + " report " + reportAbsolutePath, e);
       } catch (ReportParsingException e) {
