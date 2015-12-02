@@ -21,7 +21,6 @@ package org.sonar.plugins.coverage.generic;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
@@ -33,8 +32,8 @@ import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.config.Settings;
 import org.sonar.api.resources.Project;
-import org.sonar.api.utils.SonarException;
 
+import javax.annotation.Nullable;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.util.List;
@@ -57,9 +56,9 @@ public class GenericCoverageSensor implements Sensor {
       StringUtils.isNotEmpty(overallReportPath()) || StringUtils.isNotEmpty(unitTestReportPath());
   }
 
-  private String coverageReportPath(Logger logger) {
+  private String coverageReportPath(@Nullable Logger logger) {
     String result = settings.getString(GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
-    if (Strings.isNullOrEmpty(result)) {
+    if (StringUtils.isEmpty(result)) {
       result = settings.getString(GenericCoveragePlugin.COVERAGE_REPORT_PATHS_PROPERTY_KEY);
     } else if (logger != null) {
       logDeprecatedPropertyUsage(logger, GenericCoveragePlugin.COVERAGE_REPORT_PATHS_PROPERTY_KEY, GenericCoveragePlugin.OLD_REPORT_PATH_PROPERTY_KEY);
@@ -83,7 +82,7 @@ public class GenericCoverageSensor implements Sensor {
     return settings.getString(GenericCoveragePlugin.UNIT_TEST_REPORT_PATHS_PROPERTY_KEY);
   }
 
-  private static List<String> getList(String string) {
+  private static List<String> getList(@Nullable String string) {
     return string == null ? ImmutableList.<String>of() : Lists.newArrayList(Splitter.on(",").trimResults().omitEmptyStrings().split(string));
   }
 
@@ -126,9 +125,9 @@ public class GenericCoverageSensor implements Sensor {
       try {
         parser.parse(reportFile);
       } catch (XMLStreamException e) {
-        throw new SonarException("Cannot parse " + modeString + " report " + reportAbsolutePath, e);
+        throw new IllegalStateException("Cannot parse " + modeString + " report " + reportAbsolutePath, e);
       } catch (ReportParsingException e) {
-        throw new SonarException("Error at line " + e.lineNumber() + " of " + modeString + " report " + reportAbsolutePath, e);
+        throw new IllegalStateException("Error at line " + e.lineNumber() + " of " + modeString + " report " + reportAbsolutePath, e);
       }
     }
     parser.saveMeasures();
@@ -143,14 +142,15 @@ public class GenericCoverageSensor implements Sensor {
   }
 
   private static String getModeString(ReportParser.Mode mode) {
-    if (ReportParser.Mode.COVERAGE == mode) {
-      return "coverage";
-    } else if (ReportParser.Mode.IT_COVERAGE == mode) {
-      return "IT coverage";
-    } else if (ReportParser.Mode.OVERALL_COVERAGE == mode) {
-      return "Overall coverage";
-    } else {
-      return "unit test";
+    switch (mode) {
+      case COVERAGE:
+        return "coverage";
+      case IT_COVERAGE:
+        return "IT coverage";
+      case OVERALL_COVERAGE:
+        return "Overall coverage";
+      default:
+        return "unit test";
     }
   }
 

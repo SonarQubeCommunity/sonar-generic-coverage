@@ -33,7 +33,6 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.resources.Project;
 import org.sonar.api.resources.Resource;
-import org.sonar.api.utils.SonarException;
 
 import java.io.File;
 import java.util.List;
@@ -288,49 +287,49 @@ public class GenericCoverageSensorTest {
     assertThat(getLoggingEvents().get(13).getLevel()).isEqualTo("warn");
   }
 
-  @Test(expected = SonarException.class)
+  @Test(expected = IllegalStateException.class)
   public void analyse_txt_report() throws Exception {
     configureReportPaths("not-xml.txt");
     sensor.analyse(project, context);
   }
 
-  @Test(expected = SonarException.class)
+  @Test(expected = IllegalStateException.class)
   public void it_analyse_txt_report() throws Exception {
     configureITReportPaths("not-xml.txt");
     sensor.analyse(project, context);
   }
 
-  @Test(expected = SonarException.class)
+  @Test(expected = IllegalStateException.class)
   public void overall_analyse_txt_report() throws Exception {
     configureOverallReportPaths("not-xml.txt");
     sensor.analyse(project, context);
   }
 
-  @Test(expected = SonarException.class)
+  @Test(expected = IllegalStateException.class)
   public void ut_analyse_txt_report() throws Exception {
     configureUTReportPaths("not-xml.txt");
     sensor.analyse(project, context);
   }
 
-  @Test(expected = SonarException.class)
+  @Test(expected = IllegalStateException.class)
   public void analyse_invalid_report() throws Exception {
     configureReportPaths("invalid-coverage.xml");
     sensor.analyse(project, context);
   }
 
-  @Test(expected = SonarException.class)
+  @Test(expected = IllegalStateException.class)
   public void it_analyse_invalid_report() throws Exception {
     configureITReportPaths("invalid-coverage.xml");
     sensor.analyse(project, context);
   }
 
-  @Test(expected = SonarException.class)
+  @Test(expected = IllegalStateException.class)
   public void overall_analyse_invalid_report() throws Exception {
     configureOverallReportPaths("invalid-coverage.xml");
     sensor.analyse(project, context);
   }
 
-  @Test(expected = SonarException.class)
+  @Test(expected = IllegalStateException.class)
   public void ut_analyse_invalid_report() throws Exception {
     configureUTReportPaths("invalid-unittest.xml");
     sensor.analyse(project, context);

@@ -20,18 +20,18 @@
 package org.sonar.plugins.coverage.generic;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.measures.Metric;
 import org.sonar.api.measures.PersistenceMode;
 import org.sonar.api.utils.KeyValueFormat;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.TreeMap;
 
 public final class CustomCoverageMeasuresBuilder {
 
@@ -69,9 +69,9 @@ public final class CustomCoverageMeasuresBuilder {
   private int totalCoveredLines = 0;
   private int totalConditions = 0;
   private int totalCoveredConditions = 0;
-  private final SortedMap<Integer, Integer> hitsByLine = Maps.newTreeMap();
-  private final SortedMap<Integer, Integer> conditionsByLine = Maps.newTreeMap();
-  private final SortedMap<Integer, Integer> coveredConditionsByLine = Maps.newTreeMap();
+  private final SortedMap<Integer, Integer> hitsByLine = new TreeMap<>();
+  private final SortedMap<Integer, Integer> conditionsByLine = new TreeMap<>();
+  private final SortedMap<Integer, Integer> coveredConditionsByLine = new TreeMap<>();
   private Map<METRIC, Metric> metrics = DEFAULT_KEYS;
 
   private CustomCoverageMeasuresBuilder() {
@@ -146,7 +146,7 @@ public final class CustomCoverageMeasuresBuilder {
   }
 
   public Collection<Measure> createMeasures() {
-    Collection<Measure> measures = Lists.newArrayList();
+    Collection<Measure> measures = new ArrayList<>();
     if (getLinesToCover() > 0) {
       measures.add(new Measure(metrics.get(METRIC.LINES_TO_COVER), (double) getLinesToCover()));
       measures.add(new Measure(metrics.get(METRIC.UNCOVERED_LINES), (double) (getLinesToCover() - getCoveredLines())));

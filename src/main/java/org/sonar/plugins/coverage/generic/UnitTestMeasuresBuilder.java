@@ -19,11 +19,11 @@
  */
 package org.sonar.plugins.coverage.generic;
 
-import com.google.common.collect.Lists;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.utils.ParsingUtils;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +47,8 @@ public final class UnitTestMeasuresBuilder {
       return false;
     } else {
       TestCase testCase = new TestCase();
-      testCase.setName(name)
+      testCase
+        .setName(name)
         .setStatus(status)
         .setDuration(duration)
         .setMessage(message)
@@ -61,12 +62,18 @@ public final class UnitTestMeasuresBuilder {
   }
 
   private void setCounter(String status) {
-    if (TestCase.ERROR.equals(status)) {
-      error++;
-    } else if (TestCase.FAILURE.equals(status)) {
-      failure++;
-    } else if (TestCase.SKIPPED.equals(status)) {
-      skipped++;
+    switch (status) {
+      case TestCase.ERROR:
+        error++;
+        break;
+      case TestCase.FAILURE:
+        failure++;
+        break;
+      case TestCase.SKIPPED:
+        skipped++;
+        break;
+      default:
+        break;
     }
     test++;
   }
@@ -76,14 +83,14 @@ public final class UnitTestMeasuresBuilder {
   }
 
   public java.util.Collection<Measure> createMeasures() {
-    Collection<Measure> measures = Lists.newArrayList();
+    Collection<Measure> measures = new ArrayList<>();
     if (test > 0) {
       measures.add(new Measure(CoreMetrics.SKIPPED_TESTS, (double) skipped));
       measures.add(new Measure(CoreMetrics.TESTS, (double) test));
       measures.add(new Measure(CoreMetrics.TEST_ERRORS, (double) error));
       measures.add(new Measure(CoreMetrics.TEST_FAILURES, (double) failure));
       measures.add(new Measure(CoreMetrics.TEST_EXECUTION_TIME, (double) duration));
-      double passedTests = (double)test - error - failure;
+      double passedTests = (double) test - error - failure;
       double percentage = passedTests * 100d / test;
       measures.add(new Measure(CoreMetrics.TEST_SUCCESS_DENSITY, ParsingUtils.scaleValue(percentage)));
     }

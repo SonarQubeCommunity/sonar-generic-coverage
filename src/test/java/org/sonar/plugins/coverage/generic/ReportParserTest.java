@@ -36,7 +36,6 @@ import org.sonar.api.resources.Resource;
 import org.sonar.api.test.MutableTestCase;
 import org.sonar.api.test.MutableTestPlan;
 import org.sonar.api.utils.KeyValueFormat;
-import org.sonar.api.utils.SonarException;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -390,7 +389,7 @@ public class ReportParserTest {
       "<testCase name=\"test1\" duration=\"35\"><error message=\"ff\">ll</error></testCase></file></unitTest>");
   }
 
-  @Test(expected = SonarException.class)
+  @Test(expected = IllegalStateException.class)
   public void testUnknownFile() throws Exception {
     parseCoverageReportFile("xxx.xml");
   }

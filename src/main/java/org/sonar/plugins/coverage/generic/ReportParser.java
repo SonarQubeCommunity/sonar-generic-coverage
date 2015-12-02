@@ -19,8 +19,6 @@
  */
 package org.sonar.plugins.coverage.generic;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.sonar.api.batch.SensorContext;
@@ -29,14 +27,15 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.measures.Measure;
 import org.sonar.api.test.MutableTestPlan;
-import org.sonar.api.utils.SonarException;
 import org.sonar.api.utils.StaxParser;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,8 +62,8 @@ public class ReportParser {
   private final Mode mode;
 
   private int numberOfUnknownFiles;
-  private final List<String> firstUnknownFiles = Lists.newArrayList();
-  private final Set<String> matchedFileKeys = Sets.newHashSet();
+  private final List<String> firstUnknownFiles = new ArrayList<>();
+  private final Set<String> matchedFileKeys = new HashSet<>();
   private final Map<InputFile, CustomCoverageMeasuresBuilder> coverageMeasures = new HashMap<>();
   private final Map<InputFile, UnitTestMeasuresBuilder> unitTestMeasures = new HashMap<>();
 
@@ -81,7 +80,7 @@ public class ReportParser {
     try {
       inputStream = new FileInputStream(reportFile);
     } catch (FileNotFoundException e) {
-      throw new SonarException(e);
+      throw new IllegalStateException(e);
     }
     parse(inputStream);
   }
