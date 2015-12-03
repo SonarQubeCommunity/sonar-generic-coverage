@@ -62,18 +62,12 @@ public final class UnitTestMeasuresBuilder {
   }
 
   private void setCounter(String status) {
-    switch (status) {
-      case TestCase.ERROR:
-        error++;
-        break;
-      case TestCase.FAILURE:
-        failure++;
-        break;
-      case TestCase.SKIPPED:
-        skipped++;
-        break;
-      default:
-        break;
+    if (TestCase.ERROR.equals(status)) {
+      error++;
+    } else if (TestCase.FAILURE.equals(status)) {
+      failure++;
+    } else if (TestCase.SKIPPED.equals(status)) {
+      skipped++;
     }
     test++;
   }
