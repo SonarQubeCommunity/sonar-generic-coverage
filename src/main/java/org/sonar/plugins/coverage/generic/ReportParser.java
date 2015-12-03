@@ -32,7 +32,7 @@ import org.sonar.api.utils.StaxParser;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,14 +77,12 @@ public class ReportParser {
   }
 
   public void parse(java.io.File reportFile, String reportName) throws XMLStreamException {
-    InputStream inputStream;
-    try {
-      inputStream = new FileInputStream(reportFile);
-    } catch (FileNotFoundException e) {
+    try (InputStream inputStream = new FileInputStream(reportFile)) {
+      currentReportName = reportName;
+      parse(inputStream);
+    } catch (IOException e) {
       throw new IllegalStateException(e);
     }
-    currentReportName = reportName;
-    parse(inputStream);
   }
 
   public void parse(InputStream inputStream) throws XMLStreamException {
