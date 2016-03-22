@@ -42,7 +42,7 @@ public class Tests {
 
   @ClassRule
   public static final Orchestrator ORCHESTRATOR = Orchestrator.builderEnv()
-    .addPlugin(FileLocation.byWildcardMavenFilename(new File("../../target"), "sonar-generic-coverage-plugin-*.jar"))
+    .addPlugin(FileLocation.byWildcardMavenFilename(new File("../../sonar-generic-coverage-plugin/target"), "sonar-generic-coverage-plugin-*.jar"))
     .addPlugin("java")
     .addPlugin("javascript")
     .build();
