@@ -1,7 +1,7 @@
 /*
  * SonarQube Generic Coverage plugin :: IT
- * Copyright (C) 2014 ${owner}
- * sonarqube@googlegroups.com
+ * Copyright (C) 2014-2016 SonarSource SA
+ * mailto:contact AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -13,9 +13,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 package com.sonar.coverage.generic;
 
@@ -31,6 +31,8 @@ import org.sonar.wsclient.services.Measure;
 import org.sonar.wsclient.services.Resource;
 import org.sonar.wsclient.services.ResourceQuery;
 
+import java.io.File;
+
 @RunWith(Suite.class)
 @SuiteClasses({
   SingleLanguageTest.class,
@@ -40,7 +42,7 @@ public class Tests {
 
   @ClassRule
   public static final Orchestrator ORCHESTRATOR = Orchestrator.builderEnv()
-    .addPlugin(FileLocation.of("../../target/sonar-generic-coverage-plugin.jar"))
+    .addPlugin(FileLocation.byWildcardMavenFilename(new File("../../sonar-generic-coverage-plugin/target"), "sonar-generic-coverage-plugin-*.jar"))
     .addPlugin("java")
     .addPlugin("javascript")
     .build();
