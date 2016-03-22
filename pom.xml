@@ -13,7 +13,7 @@
   <version>1.3-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>SonarQube Generic Coverage Plugin</name>
+  <name>Generic Coverage</name>
   <description>Imports coverage reports defined in the specified format. Coverage applied to files of any language.</description>
   <inceptionYear>2014</inceptionYear>
   <url>http://redirect.sonarsource.com/plugins/genericcoverage.html</url>
