@@ -4,9 +4,8 @@ TEST:
   - plugin
 
 SQ_VERSION: 
-  - DEV
+  - 6.1
   - LTS
-  - LATEST_RELEASE
 
 
 exclude:
