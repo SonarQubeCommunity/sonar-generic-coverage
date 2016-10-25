@@ -54,7 +54,9 @@
     <sonar.pluginName>Generic Coverage</sonar.pluginName>
     <sonar.pluginClass>org.sonar.plugins.coverage.generic.GenericCoveragePlugin</sonar.pluginClass>
     <sonar.pluginDescription><![CDATA[Imports coverage reports defined a given format.]]></sonar.pluginDescription>
-     <gitRepositoryName>sonar-generic-coverage</gitRepositoryName>
+    <gitRepositoryName>sonar-generic-coverage</gitRepositoryName>
+    <!-- Release: enable publication to Bintray -->
+    <artifactsToPublish>${project.groupId}:sonar-generic-coverage-plugin:jar</artifactsToPublish>
   </properties>
 
   <dependencies>
