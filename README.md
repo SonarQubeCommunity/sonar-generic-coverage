@@ -3,9 +3,7 @@ Sonar Generic Coverage
 
 [![Build Status](https://api.travis-ci.org/SonarSource/sonar-generic-coverage.svg)](https://travis-ci.org/SonarSource/sonar-generic-coverage)
 
-<aside class="warning">
 **Deprecated** since SonarQube 6.2 because the functionality was absorbed into SonarQube core.
-</aside>
 
 | Property | Example | Description |
 |---------|---------|--------|
