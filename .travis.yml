@@ -5,7 +5,7 @@ jdk:
   - oraclejdk8
 
 install: true
-script: ./travis.sh
+mvn verify -B -e -V
 env:
   - TARGET=CI
   
@@ -20,5 +20,3 @@ cache:
 
 notifications:
   email: false
-  webhooks:
-    - secure: "d413ZIqyY3Lv7si73C5ROqN8wfNRDhNW1Y56EXutdB3zA1f/Ty3SRVc0viEG93KKPwI6nc8geWHoAEjhT5xnEXz7LE5mVEitogcAS51bsbecwCChgR0m8Dfpf8uou+0nsZak2xynr9c+AakND2nog6SqrMbez+DdjjUuvaKCxwU="
