@@ -5,8 +5,7 @@ install: true
 jdk:
   - oraclejdk8
 
-install: true
-script: - mvn verify -B -e -V
+script: mvn verify -B -e -V
 
 cache:
   directories:
